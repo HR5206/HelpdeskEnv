@@ -17,6 +17,12 @@ from models import (
 	AgentAction,
 )
 
+from helpdeskenv_class import HelpdeskEnv
+from models import (
+    HelpdeskAction, HelpdeskEnvState, HelpdeskResetResponse,
+    AgentRole, Ticket,
+)
+
 # Configure structured logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
@@ -28,7 +34,7 @@ LOCAL_IMAGE_NAME: str = os.getenv("LOCAL_IMAGE_NAME", "")
 
 app = FastAPI(title="EmailEnv", version="1.0.0")
 _env = EmailEnv()
-
+_helpdesk_env = HelpdeskEnv()
 
 class ResetRequest(BaseModel):
 	task: Optional[str] = None
@@ -75,14 +81,25 @@ async def health() -> Dict[str, str]:
 
 @app.get("/metadata")
 async def metadata() -> Dict[str, Any]:
-	"""Environment metadata — required by OpenEnv validator."""
-	return {
-		"name": "EmailEnv",
-		"description": "An OpenEnv-compliant environment for professional email triage and customer support, including spam detection, prioritization, and reply generation.",
-		"version": "1.0.0",
-		"author": "EmailEnv Maintainers",
-	}
-
+    """Environment metadata — required by OpenEnv validator."""
+    return {
+        "name": "HelpdeskEnv",
+        "description": (
+            "A multi-agent IT Helpdesk OpenEnv environment. "
+            "Agents collaborate across triage, L1/L2/L3 support tiers to resolve IT tickets. "
+            "Features: multi-agent routing, long-horizon SLA planning, persistent Knowledge Base "
+            "for self-improvement, and tiered escalation workflows. "
+            "Also includes EmailEnv tasks for spam detection, prioritization, and reply generation."
+        ),
+        "version": "2.0.0",
+        "author": "HelpdeskEnv Team",
+        "themes": [
+            "multi_agent_interaction",
+            "long_horizon_planning",
+            "world_modeling",
+            "self_improving_systems",
+        ],
+    }
 
 @app.get("/schema")
 async def schema() -> Dict[str, Any]:
@@ -123,43 +140,53 @@ async def schema() -> Dict[str, Any]:
 
 @app.get("/tasks")
 async def tasks() -> List[Dict[str, Any]]:
-	"""List all tasks with grader info — required by OpenEnv validator."""
-	return [
-		{
-			"id": "spam_classification",
-			"name": "Spam Classification",
-			"description": "Classify an incoming email as spam or not_spam.",
-			"difficulty": "easy",
-			"grader": {
-				"type": "python",
-				"path": "graders.py",
-				"function": "grade_spam",
-			},
-		},
-		{
-			"id": "email_prioritization",
-			"name": "Email Prioritization",
-			"description": "Assign a priority level (high, medium, low) to an incoming email.",
-			"difficulty": "medium",
-			"grader": {
-				"type": "python",
-				"path": "graders.py",
-				"function": "grade_priority",
-			},
-		},
-		{
-			"id": "reply_generation",
-			"name": "Reply Generation",
-			"description": "Draft a polite, relevant, and appropriately-lengthed reply to an email.",
-			"difficulty": "hard",
-			"grader": {
-				"type": "python",
-				"path": "graders.py",
-				"function": "grade_reply",
-			},
-		},
-	]
-
+    """List all tasks with grader info — required by OpenEnv validator."""
+    return [
+        # EmailEnv tasks (Round 1)
+        {
+            "id": "spam_classification",
+            "name": "Spam Classification",
+            "description": "Classify an incoming email as spam or not_spam.",
+            "difficulty": "easy",
+            "grader": {"type": "python", "path": "graders.py", "function": "grade_spam"},
+        },
+        {
+            "id": "email_prioritization",
+            "name": "Email Prioritization",
+            "description": "Assign a priority level (low/medium/high/critical) to an email.",
+            "difficulty": "medium",
+            "grader": {"type": "python", "path": "graders.py", "function": "grade_priority"},
+        },
+        {
+            "id": "reply_generation",
+            "name": "Reply Generation",
+            "description": "Draft a polite, relevant reply to an email.",
+            "difficulty": "hard",
+            "grader": {"type": "python", "path": "graders.py", "function": "grade_reply"},
+        },
+        # HelpdeskEnv tasks (Round 2)
+        {
+            "id": "helpdesk_triage",
+            "name": "Helpdesk Ticket Triage",
+            "description": "Classify a ticket by category, priority, and support tier.",
+            "difficulty": "medium",
+            "grader": {"type": "python", "path": "graders.py", "function": "grade_triage"},
+        },
+        {
+            "id": "helpdesk_resolution",
+            "name": "Helpdesk Ticket Resolution",
+            "description": "Resolve IT tickets through multi-agent collaboration.",
+            "difficulty": "hard",
+            "grader": {"type": "python", "path": "graders.py", "function": "grade_efficiency"},
+        },
+        {
+            "id": "helpdesk_kb_contribution",
+            "name": "Knowledge Base Contribution",
+            "description": "Write KB articles for novel issues to enable self-improvement.",
+            "difficulty": "hard",
+            "grader": {"type": "python", "path": "graders.py", "function": "grade_kb_contribution"},
+        },
+    ]
 
 @app.post("/mcp")
 async def mcp(body: Dict[str, Any] = Body(default={})) -> Dict[str, Any]:
@@ -317,6 +344,105 @@ async def state() -> EnvState:
 	"""Return the current environment state."""
 	return _env.state()
 
+class HelpdeskResetRequest(BaseModel):
+    seed: Optional[int] = None
+    num_tickets: Optional[int] = None
+    class Config:
+        json_schema_extra = {
+            "example": {"seed": 42, "num_tickets": 3}
+        }
+class HelpdeskStepRequest(BaseModel):
+    ticket_id: str
+    agent_role: str
+    action_type: str
+    action_value: str
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "ticket_id": "ticket_001",
+                "agent_role": "TRIAGE",
+                "action_type": "triage",
+                "action_value": '{"category": "password_reset", "priority": "medium", "tier": "L1"}',
+            }
+        }
+@app.post("/helpdesk/reset")
+async def helpdesk_reset(body: Optional[HelpdeskResetRequest] = Body(None)) -> Dict[str, Any]:
+    """Reset the helpdesk environment and start a new episode."""
+    try:
+        seed = body.seed if body else None
+        num_tickets = body.num_tickets if body else None
+        response = _helpdesk_env.reset(seed=seed, num_tickets=num_tickets)
+        return {
+            "observation": response.observation.model_dump(),
+            "total_tickets": response.total_tickets,
+            "available_actions": response.available_actions,
+            "kb_size": response.kb_size,
+            "episode": _helpdesk_env.episode_count,
+        }
+    except Exception as e:
+        logger.error(f"[HELPDESK RESET ERROR] {str(e)}")
+        raise
+@app.post("/helpdesk/step")
+async def helpdesk_step(body: HelpdeskStepRequest = Body(...)) -> Dict[str, Any]:
+    """Submit an agent action to the helpdesk environment."""
+    try:
+        action = HelpdeskAction(
+            ticket_id=body.ticket_id,
+            agent_role=AgentRole(body.agent_role),
+            action_type=body.action_type,
+            action_value=body.action_value,
+        )
+        result = _helpdesk_env.step(action)
+        return {
+            "task_id": result.task_id,
+            "reward": result.reward,
+            "done": result.done,
+            "feedback": result.feedback,
+            "correct_answer": result.correct_answer,
+        }
+    except Exception as e:
+        logger.error(f"[HELPDESK STEP ERROR] {str(e)}")
+        raise
+@app.get("/helpdesk/state")
+async def helpdesk_state() -> Dict[str, Any]:
+    """Return the current helpdesk environment state."""
+    state = _helpdesk_env.state()
+    return {
+        "current_ticket": state.current_ticket.model_dump() if state.current_ticket else None,
+        "current_agent": state.current_agent.value if state.current_agent else None,
+        "ticket_number": state.ticket_number,
+        "total_tickets": state.total_tickets,
+        "total_reward": state.total_reward,
+        "steps_on_current_ticket": state.steps_on_current_ticket,
+        "is_done": state.is_done,
+        "kb_entries_added": state.kb_entries_added,
+        "escalation_count": state.escalation_count,
+        "history_length": len(state.history),
+    }
+@app.get("/helpdesk/kb")
+async def helpdesk_kb() -> Dict[str, Any]:
+    """Return Knowledge Base statistics and entries."""
+    return _helpdesk_env.kb().stats()
+@app.get("/helpdesk/kb/search")
+async def helpdesk_kb_search(q: str = "", top_k: int = 3) -> Dict[str, Any]:
+    """Search the Knowledge Base."""
+    results = _helpdesk_env.kb().search(q, top_k=top_k)
+    return {
+        "query": q,
+        "results": [
+            {
+                "entry_id": r.entry_id,
+                "title": r.title,
+                "category": r.ticket_category.value,
+                "problem_description": r.problem_description[:200],
+                "solution": r.solution[:300],
+                "keywords": r.keywords,
+                "times_used": r.times_used,
+            }
+            for r in results
+        ],
+        "total_results": len(results),
+    }
 
 def main():
 	import uvicorn
