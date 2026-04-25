@@ -1,6 +1,10 @@
 # graders.py
 """Consolidated graders for all email tasks and helpdesk ticket actions."""
-from models import EmailTask, AgentAction, StepResult
+import json
+from models import (
+    EmailTask, AgentAction, StepResult,
+    Ticket, HelpdeskAction, TicketCategory, TicketPriority, SupportTier,
+)
 # ============================================================================
 # Task 1: Spam Classification Grader
 # ============================================================================
@@ -228,6 +232,112 @@ def grade_reply(task: EmailTask, action: AgentAction) -> StepResult:
         feedback = feedback,
         correct_answer = task.ground_truth
     )
+
+
+def grade_triage(ticket: Ticket, action: HelpdeskAction) -> StepResult:
+    """Grade the Triage Agent's classification of a ticket.
+    The Triage Agent receives a ticket and must output a JSON string with:
+    - category: one of TicketCategory values
+    - priority: one of TicketPriority values
+    - tier: one of SupportTier values ("L1", "L2", "L3")
+    Scoring breakdown:
+    - Category correct:  40% weight (binary: 1.0 or 0.0)
+    - Priority correct:  30% weight (distance-based partial credit)
+    - Tier correct:      30% weight (binary: 1.0 or 0.0)
+    Args:
+        ticket: The Ticket being triaged (contains ground truth).
+        action: The HelpdeskAction with action_value containing the JSON.
+    Returns:
+        StepResult with combined reward and detailed feedback.
+    """
+    # Parse the action_value as JSON
+    try:
+        triage_data = json.loads(action.action_value)
+    except (json.JSONDecodeError, TypeError):
+        return StepResult(
+            task_id=ticket.ticket_id,
+            reward=0.0,
+            done=False,
+            feedback=(
+                f"Invalid triage action: could not parse JSON from action_value. "
+                f"Expected format: {{\"category\": \"...\", \"priority\": \"...\", \"tier\": \"...\"}}"
+            ),
+            correct_answer=(
+                f"category={ticket.category.value}, "
+                f"priority={ticket.ground_truth_priority.value}, "
+                f"tier={ticket.ground_truth_tier.value}"
+            ),
+        )
+    # Extract fields with safe defaults
+    submitted_category = str(triage_data.get("category", "")).strip().lower()
+    submitted_priority = str(triage_data.get("priority", "")).strip().lower()
+    submitted_tier = str(triage_data.get("tier", "")).strip().upper()
+    feedback_parts = []
+    # --- Category scoring (40% weight, binary) ---
+    correct_category = ticket.category.value.lower()
+    if submitted_category == correct_category:
+        category_score = 1.0
+        feedback_parts.append(f"Category (40%): ✅ Correct — '{submitted_category}'")
+    else:
+        category_score = 0.0
+        feedback_parts.append(
+            f"Category (40%): ❌ Wrong — you said '{submitted_category}', "
+            f"correct is '{correct_category}'"
+        )
+    # --- Priority scoring (30% weight, distance-based) ---
+    correct_priority = ticket.ground_truth_priority.value.lower()
+    if submitted_priority not in PRIORITY_SCALE:
+        priority_score = 0.0
+        feedback_parts.append(
+            f"Priority (30%): ❌ Invalid — '{submitted_priority}' is not a valid priority. "
+            f"Valid options: {set(PRIORITY_SCALE.keys())}"
+        )
+    else:
+        distance = abs(PRIORITY_SCALE[submitted_priority] - PRIORITY_SCALE[correct_priority])
+        priority_score = round(1.0 - (distance / _MAX_PRIORITY_DISTANCE), 2)
+        if distance == 0:
+            feedback_parts.append(f"Priority (30%): ✅ Correct — '{submitted_priority}'")
+        else:
+            feedback_parts.append(
+                f"Priority (30%): ⚠️ Off by {distance} — you said '{submitted_priority}', "
+                f"correct is '{correct_priority}' (score: {priority_score:.2f})"
+            )
+    # --- Tier scoring (30% weight, binary) ---
+    correct_tier = ticket.ground_truth_tier.value.upper()
+    if submitted_tier == correct_tier:
+        tier_score = 1.0
+        feedback_parts.append(f"Tier (30%): ✅ Correct — '{submitted_tier}'")
+    else:
+        tier_score = 0.0
+        feedback_parts.append(
+            f"Tier (30%): ❌ Wrong — you said '{submitted_tier}', "
+            f"correct is '{correct_tier}'"
+        )
+    # --- Combined reward ---
+    final_reward = round(
+        (category_score * 0.4) +
+        (priority_score * 0.3) +
+        (tier_score * 0.3),
+        2
+    )
+    feedback = (
+        f"Triage Score Breakdown:\n"
+        + "\n".join(f"  {part}" for part in feedback_parts)
+        + f"\n{'_' * 47}\n"
+        + f"  Final Triage Score: {final_reward:.2f}"
+    )
+    return StepResult(
+        task_id=ticket.ticket_id,
+        reward=final_reward,
+        done=False,
+        feedback=feedback,
+        correct_answer=(
+            f"category={correct_category}, "
+            f"priority={correct_priority}, "
+            f"tier={correct_tier}"
+        ),
+    )
+    
 # ============================================================================
 # Quick Validation (run with: python graders.py)
 # ============================================================================
