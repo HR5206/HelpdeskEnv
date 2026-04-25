@@ -391,7 +391,7 @@ async def helpdesk_step(body: HelpdeskStepRequest = Body(...)) -> Dict[str, Any]
     try:
         action = HelpdeskAction(
             ticket_id=body.ticket_id,
-            agent_role=AgentRole(body.agent_role),
+            agent_role=AgentRole(body.agent_role.lower()),
             action_type=body.action_type,
             action_value=body.action_value,
         )
