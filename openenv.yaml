@@ -1,0 +1,48 @@
+spec_version: "1.0"
+name: EmailEnv
+id: emailenv
+type: space
+version: "0.1.0"
+description: "An OpenEnv-compliant environment for professional email triage and customer support, including spam detection, prioritization, and reply generation."
+license: Apache-2.0
+homepage: "https://huggingface.co/spaces/Harishraghav-05/emailenv"
+repository: "https://github.com/HR5206/emailenv"
+maintainers:
+  - name: "EmailEnv Maintainers"
+    email: "harishraghav256@gmail.com"
+runtime:
+  type: docker
+  dockerfile: Dockerfile
+  port: 7860
+tags:
+  - openenv
+  - email
+  - spam-detection
+  - customer-support
+  - prioritization
+  - reply-generation
+tasks:
+  - id: spam_classification
+    name: Spam Classification
+    description: "Classify an incoming email as spam or not_spam."
+    difficulty: easy
+    grader:
+      type: python
+      path: graders.py
+      function: grade_spam
+  - id: email_prioritization
+    name: Email Prioritization
+    description: "Assign a priority level (high, medium, low) to an incoming email."
+    difficulty: medium
+    grader:
+      type: python
+      path: graders.py
+      function: grade_priority
+  - id: reply_generation
+    name: Reply Generation
+    description: "Draft a polite, relevant, and appropriately-lengthed reply to an email."
+    difficulty: hard
+    grader:
+      type: python
+      path: graders.py
+      function: grade_reply
