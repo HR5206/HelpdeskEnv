@@ -13,12 +13,14 @@ The environment follows the OpenEnv API pattern:
 """
 import random
 from typing import Optional, Dict, Any, List
+import json
 from models import (
     Ticket, HelpdeskAction, HelpdeskEnvState, HelpdeskResetResponse,
-    StepResult, AgentRole, SupportTier, VALID_ACTION_TYPES,
+    StepResult, ErrorResponse, AgentRole, SupportTier, VALID_ACTION_TYPES,
 )
 from knowledge_base import KnowledgeBase
 from tasks import get_all_ticket_scenarios
+from graders import grade_triage
 class HelpdeskEnv:
     """Multi-Agent IT Helpdesk Environment.
     Architecture:
@@ -167,6 +169,161 @@ class HelpdeskEnv:
         self._steps_on_ticket = 0
         self._escalation_count = 0
         return True
+
+    def _validate_action(self, action: HelpdeskAction) -> Optional[StepResult]:
+        """Validate an incoming action before processing.
+
+        Checks:
+        1. Episode is not already done
+        2. ticket_id matches current ticket
+        3. agent_role matches current agent
+        4. action_type is valid for this agent role
+
+        Args:
+            action: The HelpdeskAction to validate.
+
+        Returns:
+            None if valid, or a StepResult with error feedback if invalid.
+        """
+        ticket = self._current_ticket()
+
+        # Check episode is active
+        if self._is_done or ticket is None:
+            return StepResult(
+                task_id=action.ticket_id,
+                reward=0.0,
+                done=True,
+                feedback="Episode is already complete. Call reset() to start a new episode.",
+            )
+
+        # Check ticket_id matches
+        if action.ticket_id != ticket.ticket_id:
+            return StepResult(
+                task_id=action.ticket_id,
+                reward=0.0,
+                done=False,
+                feedback=(
+                    f"Wrong ticket_id: you sent '{action.ticket_id}' "
+                    f"but current ticket is '{ticket.ticket_id}'."
+                ),
+            )
+
+        # Check agent_role matches
+        if action.agent_role != self._current_agent:
+            return StepResult(
+                task_id=ticket.ticket_id,
+                reward=0.0,
+                done=False,
+                feedback=(
+                    f"Wrong agent_role: you sent '{action.agent_role.value}' "
+                    f"but current agent is '{self._current_agent.value}'."
+                ),
+            )
+
+        # Check action_type is valid for this role
+        valid_types = VALID_ACTION_TYPES.get(action.agent_role.value, [])
+        if action.action_type not in valid_types:
+            return StepResult(
+                task_id=ticket.ticket_id,
+                reward=0.0,
+                done=False,
+                feedback=(
+                    f"Invalid action_type '{action.action_type}' for agent "
+                    f"'{action.agent_role.value}'. Valid types: {valid_types}"
+                ),
+            )
+
+        return None  # All checks passed
+
+    def step(self, action: HelpdeskAction) -> StepResult:
+        """Process one agent action.
+
+        This is the core game loop. The flow depends on which agent is active:
+
+        TRIAGE phase (current_agent == TRIAGE):
+        1. Validate the action
+        2. Grade the triage classification (category, priority, tier)
+        3. Route to the assigned support tier agent
+        4. Return the grading result
+
+        SUPPORT phase (current_agent == L1/L2/L3):
+        → Handled in Part 12
+
+        Args:
+            action: The HelpdeskAction submitted by the current agent.
+
+        Returns:
+            StepResult with reward, feedback, and done status.
+        """
+        # Validate the action
+        validation_error = self._validate_action(action)
+        if validation_error is not None:
+            return validation_error
+
+        ticket = self._current_ticket()
+        self._steps_on_ticket += 1
+
+        # ── TRIAGE PHASE ──────────────────────────────────────────
+        if self._current_agent == AgentRole.TRIAGE:
+            return self._handle_triage(ticket, action)
+
+        # ── SUPPORT PHASE (L1/L2/L3) ─────────────────────────────
+        # Placeholder — will be implemented in Part 12
+        return StepResult(
+            task_id=ticket.ticket_id,
+            reward=0.0,
+            done=False,
+            feedback=f"Support agent actions not yet implemented (agent: {self._current_agent.value}).",
+        )
+
+    def _handle_triage(self, ticket: Ticket, action: HelpdeskAction) -> StepResult:
+        """Handle a triage action: classify and route the ticket.
+
+        Grades the triage classification, then routes the ticket to
+        the support tier that the triage agent specified. Uses the
+        ground truth tier for routing (so even if the agent gets the
+        tier wrong, the ticket still goes to the correct agent).
+
+        Args:
+            ticket: The current ticket being triaged.
+            action: The triage action with JSON classification.
+
+        Returns:
+            StepResult with triage score and routing feedback.
+        """
+        # Grade the triage classification
+        result = grade_triage(ticket, action)
+
+        # Track the reward
+        self._total_reward += result.reward
+        self._history.append(result)
+
+        # Parse the submitted tier to determine routing
+        # Use ground truth tier for routing (ensures correct workflow)
+        # even if the agent misclassified — the penalty is in the score
+        try:
+            triage_data = json.loads(action.action_value)
+            submitted_tier = str(triage_data.get("tier", "")).strip().upper()
+        except (json.JSONDecodeError, TypeError):
+            submitted_tier = ""
+
+        # Route to the correct support tier (ground truth)
+        tier = ticket.ground_truth_tier
+        if tier == SupportTier.L1:
+            self._current_agent = AgentRole.L1_SUPPORT
+        elif tier == SupportTier.L2:
+            self._current_agent = AgentRole.L2_SUPPORT
+        else:
+            self._current_agent = AgentRole.L3_SUPPORT
+
+        # Append routing info to the feedback
+        result.feedback += (
+            f"\n\n→ Ticket routed to {self._current_agent.value} "
+            f"(ground truth tier: {tier.value})"
+        )
+
+        return result
+
 # ============================================================================
 # Quick Validation (run with: python helpdeskenv_class.py)
 # ============================================================================
