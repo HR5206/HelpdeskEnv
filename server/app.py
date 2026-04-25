@@ -213,12 +213,12 @@ async def home():
 <head>
 	<meta charset=\"UTF-8\">
 	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-	<title>EmailEnv</title>
+	<title>HelpdeskEnv</title>
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body { 
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			background: linear-gradient(135deg, #4338ca 0%, #7e22ce 100%);
 			min-height: 100vh;
 			display: flex;
 			align-items: center;
@@ -227,39 +227,42 @@ async def home():
 		}
 		.container {
 			background: white;
-			border-radius: 10px;
-			box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+			border-radius: 12px;
+			box-shadow: 0 20px 50px rgba(0,0,0,0.3);
 			padding: 40px;
-			max-width: 600px;
+			max-width: 650px;
 			text-align: center;
 		}
-		h1 { color: #333; margin-bottom: 10px; font-size: 2.5em; }
-		.emoji { font-size: 3em; display: block; margin: 20px 0; }
-		p { color: #666; line-height: 1.8; margin: 15px 0; }
-		.tasks { background: #f5f5f5; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: left; }
-		.tasks h2 { color: #333; margin-bottom: 15px; font-size: 1.2em; }
-		.task-item { padding: 10px 0; border-bottom: 1px solid #ddd; }
+		h1 { color: #1e1b4b; margin-bottom: 10px; font-size: 2.8em; }
+		.emoji { font-size: 3.5em; display: block; margin: 15px 0; }
+		p.subtitle { color: #4f46e5; font-weight: bold; font-size: 1.1em; margin-bottom: 15px; }
+		p.desc { color: #475569; line-height: 1.6; margin-bottom: 25px; }
+		.tasks { background: #f8fafc; border-radius: 10px; padding: 25px; margin: 25px 0; text-align: left; border: 1px solid #e2e8f0; }
+		.tasks h2 { color: #334155; margin-bottom: 15px; font-size: 1.3em; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+		.task-item { padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
 		.task-item:last-child { border-bottom: none; }
-		.task-item strong { color: #667eea; }
-		.links { margin-top: 30px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-		a { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; transition: background 0.3s; }
-		a:hover { background: #764ba2; }
+		.task-item strong { color: #4338ca; }
+		.links { margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+		a { display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2); }
+		a:hover { background: #4338ca; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(79, 70, 229, 0.3); }
 	</style>
 </head>
 <body>
 	<div class=\"container\">
-		<span class=\"emoji\">📧</span>
-		<h1>EmailEnv</h1>
-		<p><strong>OpenEnv environment for email triage and customer support</strong></p>
+		<span class=\"emoji\">🎫</span>
+		<h1>HelpdeskEnv</h1>
+		<p class=\"subtitle\">Multi-agent IT Helpdesk Environment (v2.0.0)</p>
+		<p class=\"desc\">An OpenEnv-compatible framework featuring tiered support agents (Triage → L1 → L2 → L3), a self-improving Knowledge Base, and SLA-driven resolution planning.</p>
 		<div class=\"tasks\">
-			<h2>Tasks</h2>
-			<div class=\"task-item\"><strong>Spam Detection</strong> - Classify emails as spam or legitimate</div>
-			<div class=\"task-item\"><strong>Prioritization</strong> - Assign priority levels (low/medium/high)</div>
-			<div class=\"task-item\"><strong>Reply Generation</strong> - Generate customer support replies</div>
+			<h2>Key Tasks</h2>
+			<div class=\"task-item\"><strong>Ticket Triage</strong> - Classify incoming issues by category, priority, and support tier</div>
+			<div class=\"task-item\"><strong>Multi-Agent Resolution</strong> - Collaborate across L1/L2/L3 agents within SLA constraints</div>
+			<div class=\"task-item\"><strong>KB Contribution</strong> - Write articles for novel issues to enable self-improvement</div>
+			<div class=\"task-item\" style=\"color: #64748b; font-size: 0.9em; margin-top: 5px;\"><em>+ Includes 3 legacy EmailEnv tasks (Spam, Prioritization, Replies)</em></div>
 		</div>
 		<div class=\"links\">
 			<a href=\"/docs\">API Docs</a>
-			<a href=\"https://github.com/HR5206/emailenv\">🔗 GitHub</a>
+			<a href=\"https://github.com/HR5206/HelpdeskEnv\">🔗 GitHub</a>
 		</div>
 	</div>
 </body>
