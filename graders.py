@@ -399,6 +399,87 @@ def grade_efficiency(steps_taken: int, sla_steps: int, escalation_count: int) ->
         feedback=feedback,
         correct_answer=f"SLA={sla_steps} steps, minimize escalations",
     )
+_KB_SPECIFICITY_KEYWORDS = [
+    "resolved", "fixed", "steps", "root cause", "procedure",
+    "workaround", "solution", "configured", "installed", "updated",
+    "upgraded", "patched", "restored", "recovered", "verified",
+    "confirmed", "diagnosed", "identified", "applied", "executed",
+]
+def grade_kb_contribution(kb_entry_text: str, ticket: Ticket) -> StepResult:
+    """Grade a Knowledge Base article written by an L3 agent.
+    This grader ensures that KB articles added to the knowledge base are
+    actually useful for future agents. It checks three dimensions:
+    1. Relevance (35%): Does the article reference concepts from the ticket?
+       Uses the same keyword-overlap approach as _score_relevance().
+    2. Length (30%): Is the article substantive enough to be useful?
+       Reuses _score_length() directly.
+    3. Specificity (35%): Does the article contain actionable resolution
+       language? Checks for keywords like "root cause", "steps", "fixed", etc.
+    Args:
+        kb_entry_text: The full text of the KB article (problem + solution combined).
+        ticket: The Ticket this article was written for (used for relevance scoring).
+    Returns:
+        StepResult with quality score and detailed feedback.
+    """
+    if not kb_entry_text or not kb_entry_text.strip():
+        return StepResult(
+            task_id=ticket.ticket_id,
+            reward=0.0,
+            done=False,
+            feedback="No KB article text was provided.",
+            correct_answer="Write a detailed KB article with problem description and solution steps.",
+        )
+    text = kb_entry_text.strip()
+    # --- Relevance (35% weight) ---
+    # Build a pseudo-EmailTask so we can reuse the keyword-matching logic
+    # from the reply grader. The ticket's subject and body provide the keywords.
+    pseudo_task = EmailTask(
+        task_id=ticket.ticket_id,
+        task_type="reply",  # type doesn't matter, just need subject/body
+        subject=ticket.subject,
+        sender=ticket.sender,
+        body=ticket.body,
+    )
+    relevance_score, relevance_fb = _score_relevance(text, pseudo_task)
+    # --- Length (30% weight) ---
+    length_score, length_fb = _score_length(text)
+    # --- Specificity (35% weight) ---
+    text_lower = text.lower()
+    specificity_hits = sum(1 for kw in _KB_SPECIFICITY_KEYWORDS if kw in text_lower)
+    if specificity_hits >= 5:
+        specificity_score = 1.0
+        specificity_fb = f"Highly specific ({specificity_hits} resolution keywords found)"
+    elif specificity_hits >= 3:
+        specificity_score = 0.75
+        specificity_fb = f"Moderately specific ({specificity_hits} resolution keywords found)"
+    elif specificity_hits >= 1:
+        specificity_score = 0.5
+        specificity_fb = f"Somewhat vague ({specificity_hits} resolution keyword(s) found)"
+    else:
+        specificity_score = 0.25
+        specificity_fb = "Article lacks specific resolution language"
+    # --- Combined reward ---
+    final_reward = round(
+        (relevance_score * 0.35) +
+        (length_score * 0.30) +
+        (specificity_score * 0.35),
+        2
+    )
+    feedback = (
+        f"KB Contribution Score Breakdown:\n"
+        f"  Relevance (35%): {relevance_score:.2f} — {relevance_fb}\n"
+        f"  Length (30%): {length_score:.2f} — {length_fb}\n"
+        f"  Specificity (35%): {specificity_score:.2f} — {specificity_fb}\n"
+        f"{'_' * 47}\n"
+        f"  Final KB Contribution Score: {final_reward:.2f}"
+    )
+    return StepResult(
+        task_id=ticket.ticket_id,
+        reward=final_reward,
+        done=False,
+        feedback=feedback,
+        correct_answer="A detailed KB article with problem description, root cause, and step-by-step solution.",
+    )
     
 # ============================================================================
 # Quick Validation (run with: python graders.py)
