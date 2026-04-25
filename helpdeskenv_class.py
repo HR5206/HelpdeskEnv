@@ -16,11 +16,15 @@ from typing import Optional, Dict, Any, List
 import json
 from models import (
     Ticket, HelpdeskAction, HelpdeskEnvState, HelpdeskResetResponse,
-    StepResult, ErrorResponse, AgentRole, SupportTier, VALID_ACTION_TYPES,
+    StepResult, ErrorResponse, AgentRole, SupportTier, TicketCategory,
+    VALID_ACTION_TYPES, EmailTask, AgentAction,
 )
-from knowledge_base import KnowledgeBase
+from knowledge_base import KnowledgeBase, KBEntry
 from tasks import get_all_ticket_scenarios
-from graders import grade_triage
+from graders import (
+    grade_triage, grade_efficiency, grade_kb_contribution,
+    _score_relevance, _score_politeness, _score_length,
+)
 class HelpdeskEnv:
     """Multi-Agent IT Helpdesk Environment.
     Architecture:
@@ -269,12 +273,7 @@ class HelpdeskEnv:
 
         # ── SUPPORT PHASE (L1/L2/L3) ─────────────────────────────
         # Placeholder — will be implemented in Part 12
-        return StepResult(
-            task_id=ticket.ticket_id,
-            reward=0.0,
-            done=False,
-            feedback=f"Support agent actions not yet implemented (agent: {self._current_agent.value}).",
-        )
+        return self._handle_support(ticket, action)
 
     def _handle_triage(self, ticket: Ticket, action: HelpdeskAction) -> StepResult:
         """Handle a triage action: classify and route the ticket.
@@ -323,7 +322,252 @@ class HelpdeskEnv:
         )
 
         return result
-
+    
+    def _handle_support(self, ticket: Ticket, action: HelpdeskAction) -> StepResult:
+        """Handle a support agent action (L1/L2/L3).
+        Dispatches to the appropriate handler based on action_type:
+        - search_kb: Query the Knowledge Base
+        - apply_solution/apply_fix/apply_complex_fix: Attempt resolution
+        - respond_to_customer: Send reply and resolve ticket
+        - escalate: Move to next tier
+        - write_kb_entry: Add article to Knowledge Base
+        Args:
+            ticket: The current ticket.
+            action: The support action.
+        Returns:
+            StepResult with action-specific feedback and reward.
+        """
+        action_type = action.action_type
+        # ── SEARCH KB ─────────────────────────────────────────────
+        if action_type == "search_kb":
+            query = action.action_value.strip()
+            results = self._kb.search(query, top_k=3)
+            if results:
+                kb_text = "\n\n".join(
+                    f"📄 [{r.entry_id}] {r.title}\n"
+                    f"   Problem: {r.problem_description[:100]}...\n"
+                    f"   Solution: {r.solution[:150]}..."
+                    for r in results
+                )
+                feedback = f"KB Search Results for '{query}':\n{kb_text}"
+            else:
+                feedback = f"No KB articles found for query: '{query}'"
+            result = StepResult(
+                task_id=ticket.ticket_id,
+                reward=0.0,  # search is free — no reward or penalty
+                done=False,
+                feedback=feedback,
+            )
+            self._history.append(result)
+            return result
+        # ── APPLY SOLUTION / FIX / COMPLEX FIX ───────────────────
+        if action_type in ("apply_solution", "apply_fix", "apply_complex_fix"):
+            submitted_fix = action.action_value.strip()
+            ground_truth = ticket.ground_truth_resolution
+            # Score using keyword relevance between submitted fix and ground truth
+            pseudo_task = EmailTask(
+                task_id=ticket.ticket_id,
+                task_type="reply",
+                subject=ticket.subject,
+                sender=ticket.sender,
+                body=ground_truth,  # Use ground truth as the "email body" for keyword matching
+            )
+            relevance_score, relevance_fb = _score_relevance(submitted_fix, pseudo_task)
+            length_score, length_fb = _score_length(submitted_fix)
+            resolution_reward = round(relevance_score * 0.6 + length_score * 0.4, 2)
+            feedback = (
+                f"Resolution Score Breakdown:\n"
+                f"  Relevance to expected fix (60%): {relevance_score:.2f} — {relevance_fb}\n"
+                f"  Detail/length (40%): {length_score:.2f} — {length_fb}\n"
+                f"  Resolution Score: {resolution_reward:.2f}"
+            )
+            result = StepResult(
+                task_id=ticket.ticket_id,
+                reward=resolution_reward,
+                done=False,
+                feedback=feedback,
+                correct_answer=ground_truth[:200] + "..." if len(ground_truth) > 200 else ground_truth,
+            )
+            self._total_reward += result.reward
+            self._history.append(result)
+            # Store as resolution reward for this ticket
+            if ticket.ticket_id not in self._ticket_rewards:
+                self._ticket_rewards[ticket.ticket_id] = []
+            self._ticket_rewards[ticket.ticket_id].append(
+                ("resolution", resolution_reward)
+            )
+            return result
+        # ── RESPOND TO CUSTOMER ───────────────────────────────────
+        if action_type == "respond_to_customer":
+            reply_text = action.action_value.strip()
+            # Grade the customer response using existing reply scoring
+            politeness_score, pol_fb = _score_politeness(reply_text)
+            length_score, len_fb = _score_length(reply_text)
+            pseudo_task = EmailTask(
+                task_id=ticket.ticket_id,
+                task_type="reply",
+                subject=ticket.subject,
+                sender=ticket.sender,
+                body=ticket.body,
+            )
+            relevance_score, rel_fb = _score_relevance(reply_text, pseudo_task)
+            response_reward = round(
+                politeness_score * 0.4 + length_score * 0.3 + relevance_score * 0.3, 2
+            )
+            feedback = (
+                f"Customer Response Score:\n"
+                f"  Politeness (40%): {politeness_score:.2f} — {pol_fb}\n"
+                f"  Length (30%): {length_score:.2f} — {len_fb}\n"
+                f"  Relevance (30%): {relevance_score:.2f} — {rel_fb}\n"
+                f"  Response Score: {response_reward:.2f}"
+            )
+            # Store response reward
+            if ticket.ticket_id not in self._ticket_rewards:
+                self._ticket_rewards[ticket.ticket_id] = []
+            self._ticket_rewards[ticket.ticket_id].append(
+                ("response", response_reward)
+            )
+            # Responding to customer RESOLVES the ticket
+            combined = self._resolve_ticket(ticket, response_reward)
+            is_last = not self._advance_to_next_ticket()
+            feedback += f"\n\n✅ Ticket resolved! Combined ticket reward: {combined:.2f}"
+            if is_last:
+                feedback += "\n🏁 All tickets resolved — episode complete!"
+            result = StepResult(
+                task_id=ticket.ticket_id,
+                reward=response_reward,
+                done=is_last,
+                feedback=feedback,
+            )
+            self._total_reward += response_reward
+            self._history.append(result)
+            return result
+        # ── ESCALATE ──────────────────────────────────────────────
+        if action_type == "escalate":
+            self._escalation_count += 1
+            reason = action.action_value.strip() or "No reason provided"
+            # Move to next tier
+            if self._current_agent == AgentRole.L1_SUPPORT:
+                self._current_agent = AgentRole.L2_SUPPORT
+                new_tier = "L2"
+            elif self._current_agent == AgentRole.L2_SUPPORT:
+                self._current_agent = AgentRole.L3_SUPPORT
+                new_tier = "L3"
+            else:
+                # L3 can't escalate further — stay at L3
+                result = StepResult(
+                    task_id=ticket.ticket_id,
+                    reward=0.0,
+                    done=False,
+                    feedback="⚠️ L3 is the highest tier — cannot escalate further.",
+                )
+                self._history.append(result)
+                return result
+            result = StepResult(
+                task_id=ticket.ticket_id,
+                reward=0.0,  # No reward for escalation (efficiency penalty later)
+                done=False,
+                feedback=(
+                    f"↗️ Escalated to {new_tier}: {reason}\n"
+                    f"Total escalations on this ticket: {self._escalation_count}"
+                ),
+            )
+            self._history.append(result)
+            return result
+        # ── WRITE KB ENTRY ────────────────────────────────────────
+        if action_type == "write_kb_entry":
+            try:
+                kb_data = json.loads(action.action_value)
+            except (json.JSONDecodeError, TypeError):
+                # Treat as plain text if not JSON
+                kb_data = {
+                    "title": f"KB Article for {ticket.ticket_id}",
+                    "problem_description": ticket.body[:200],
+                    "solution": action.action_value,
+                    "keywords": ticket.subject.lower().split(),
+                }
+            # Grade the KB contribution
+            combined_text = (
+                kb_data.get("problem_description", "") + " " +
+                kb_data.get("solution", "")
+            )
+            kb_result = grade_kb_contribution(combined_text, ticket)
+            # Add to the Knowledge Base if quality is sufficient
+            if kb_result.reward >= 0.3:
+                new_entry = KBEntry(
+                    entry_id="",  # Auto-generated
+                    ticket_category=ticket.category,
+                    title=kb_data.get("title", f"Article for {ticket.ticket_id}"),
+                    problem_description=kb_data.get("problem_description", ""),
+                    solution=kb_data.get("solution", ""),
+                    keywords=kb_data.get("keywords", []),
+                    created_by="l3_agent",
+                )
+                added = self._kb.add(new_entry)
+                self._kb_entries_added += 1
+                kb_result.feedback += f"\n\n📝 KB article added as '{added.entry_id}' (KB size: {self._kb.size()})"
+            else:
+                kb_result.feedback += "\n\n❌ KB article quality too low — not added (threshold: 0.30)"
+            # Store KB reward
+            if ticket.ticket_id not in self._ticket_rewards:
+                self._ticket_rewards[ticket.ticket_id] = []
+            self._ticket_rewards[ticket.ticket_id].append(
+                ("kb_contribution", kb_result.reward)
+            )
+            self._total_reward += kb_result.reward
+            self._history.append(kb_result)
+            return kb_result
+        # ── UNKNOWN ACTION (should not reach here due to validation) ─
+        return StepResult(
+            task_id=ticket.ticket_id,
+            reward=0.0,
+            done=False,
+            feedback=f"Unknown action_type: {action_type}",
+        )
+    def _resolve_ticket(self, ticket: Ticket, response_reward: float) -> float:
+        """Calculate the combined reward for a fully resolved ticket.
+        Combines all grading dimensions with the specified weights:
+        - Resolution quality:  30%
+        - Response quality:    20%
+        - Efficiency:          20%
+        - Triage accuracy:     15%
+        - KB contribution:     15%
+        Args:
+            ticket: The ticket that was just resolved.
+            response_reward: The reward from the customer response.
+        Returns:
+            The combined weighted reward for this ticket.
+        """
+        rewards = self._ticket_rewards.get(ticket.ticket_id, [])
+        # Gather component scores (use defaults if not found)
+        resolution_score = next(
+            (r for t, r in rewards if t == "resolution"), 0.5
+        )
+        response_score = response_reward
+        kb_score = next(
+            (r for t, r in rewards if t == "kb_contribution"), 0.0
+        )
+        # Efficiency score (calculated now with final step count)
+        efficiency_result = grade_efficiency(
+            self._steps_on_ticket, ticket.sla_steps, self._escalation_count
+        )
+        efficiency_score = efficiency_result.reward
+        # Triage score (find from history)
+        triage_score = 0.5  # default
+        for h in self._history:
+            if h.task_id == ticket.ticket_id and h.feedback and "Triage Score" in h.feedback:
+                triage_score = h.reward
+                break
+        # Combined weighted reward
+        combined = round(
+            resolution_score * 0.30 +
+            response_score * 0.20 +
+            efficiency_score * 0.20 +
+            triage_score * 0.15 +
+            kb_score * 0.15,
+            4
+        )
+        return combined
 # ============================================================================
 # Quick Validation (run with: python helpdeskenv_class.py)
 # ============================================================================
