@@ -1,13 +1,11 @@
-"""Consolidated task scenarios for all three email tasks."""
-
+# tasks.py
+"""Consolidated task scenarios for all three email tasks and helpdesk tickets."""
 import random
-from models import EmailTask, TaskType
-
-
+from typing import Optional
+from models import EmailTask, TaskType, Ticket, TicketCategory, TicketPriority, SupportTier
 # ============================================================================
 # Task 1: Spam Classification Scenarios
 # ============================================================================
-
 SPAM_SCENARIOS = [
     EmailTask(
         task_id = "spam_001",
@@ -24,7 +22,6 @@ SPAM_SCENARIOS = [
         context = "Classify this email as spam or not_spam.",
         ground_truth = "spam"
     ),
-
     EmailTask(
         task_id = "spam_002",
         task_type = TaskType.SPAM,
@@ -40,7 +37,6 @@ SPAM_SCENARIOS = [
         context = "Classify this email as spam or not_spam.",
         ground_truth = "not_spam"
     ),
-
     EmailTask(
         task_id = "spam_003",
         task_type = TaskType.SPAM,
@@ -55,7 +51,6 @@ SPAM_SCENARIOS = [
         context = "Classify this email as spam or not_spam",
         ground_truth = "spam"
     ),
-
     EmailTask(
         task_id = "spam_004",
         task_type = TaskType.SPAM,
@@ -73,7 +68,6 @@ SPAM_SCENARIOS = [
         context = "Classify this email as spam or not_spam",
         ground_truth = "not_spam"
     ),
-
     EmailTask(
         task_id = "spam_005",
         task_type = TaskType.SPAM,
@@ -107,26 +101,20 @@ SPAM_SCENARIOS = [
         ground_truth="not_spam"
     ),
 ]
-
 def get_spam_scenario(index: int) -> EmailTask:
     """Get a specific spam scenario by index."""
     return SPAM_SCENARIOS[index % len(SPAM_SCENARIOS)]
-
 def get_random_spam_scenario(seed: int = None) -> EmailTask:
     """Get a random reply scenario, optionally seeded."""
     if seed is not None:
         random.seed(seed)
     return random.choice(SPAM_SCENARIOS)
-
 def get_all_spam_scenarios() -> list[EmailTask]:
     """Return all reply scenarios."""
     return SPAM_SCENARIOS
-
-
 # ============================================================================
 # Task 2: Email Prioritization Scenarios
 # ============================================================================
-
 PRIORITY_SCENARIOS = [
     EmailTask(
         task_id = "priority_001",
@@ -147,7 +135,6 @@ PRIORITY_SCENARIOS = [
         ),
         ground_truth = "high"
     ),
-
     EmailTask(
         task_id = "priority_002",
         task_type = TaskType.PRIORITY,
@@ -245,26 +232,20 @@ PRIORITY_SCENARIOS = [
         ground_truth="high"
     ),
 ]
-
 def get_priority_scenario(index: int) -> EmailTask:
     """Get a specific priority scenario by index."""
     return PRIORITY_SCENARIOS[index % len(PRIORITY_SCENARIOS)]
-
 def get_random_priority_scenario(seed: int = None) -> EmailTask:
     """Get a random priority scenario, optionally seeded."""
     if seed is not None:
         random.seed(seed)
     return random.choice(PRIORITY_SCENARIOS)
-
 def get_all_priority_scenarios() -> list[EmailTask]:
     """Return all priority scenarios."""
     return PRIORITY_SCENARIOS
-
-
 # ============================================================================
 # Task 3: Reply Generation Scenarios
 # ============================================================================
-
 REPLY_SCENARIOS = [
     EmailTask(
         task_id="reply_001",
@@ -343,32 +324,22 @@ REPLY_SCENARIOS = [
         )
     ),
 ]
-
-
 def get_reply_scenario(index: int) -> EmailTask:
     """Get a specific reply scenario by index."""
     return REPLY_SCENARIOS[index % len(REPLY_SCENARIOS)]
-
-
 def get_random_reply_scenario(seed: int = None) -> EmailTask:
     """Get a random reply scenario, optionally seeded."""
     if seed is not None:
         random.seed(seed)
     return random.choice(REPLY_SCENARIOS)
-
-
 def get_all_reply_scenarios() -> list[EmailTask]:
     """Return all reply scenarios."""
     return REPLY_SCENARIOS
-
-
 # ============================================================================
 # Utility: Fetch tasks by type string
 # ============================================================================
-
 def get_tasks_by_type(task_type: str) -> list[EmailTask]:
     """Return all scenarios for a given task type key.
-
     Accepted values: "spam", "priority", "reply".
     """
     key = task_type.lower()
@@ -379,3 +350,125 @@ def get_tasks_by_type(task_type: str) -> list[EmailTask]:
     if key == "reply":
         return REPLY_SCENARIOS
     raise ValueError(f"Unknown task_type: {task_type}")
+# ============================================================================
+# HelpdeskEnv: IT Support Ticket Scenarios
+# ============================================================================
+TICKET_SCENARIOS: list[Ticket] = [
+    # ------------------------------------------------------------------
+    # ticket_001: Password Reset — L1, medium priority, sla_steps=3
+    # ------------------------------------------------------------------
+    # WHY this is easy:
+    # - Password resets are the most common IT ticket type globally
+    # - L1 agents should find a matching KB article (seeded in Part 6)
+    # - 3-step SLA is tight but achievable: search_kb → apply_solution → respond
+    # - No KB article needed (the solution is already well-documented)
+    Ticket(
+        ticket_id="ticket_001",
+        category=TicketCategory.PASSWORD_RESET,
+        subject="Cannot log in to my account — password expired",
+        sender="jsmith@company.com",
+        body=(
+            "Hi IT Support,\n\n"
+            "I'm unable to log in to my workstation this morning. The system "
+            "says my password has expired and I need to reset it, but I can't "
+            "access the self-service portal because it requires my old password "
+            "to authenticate.\n\n"
+            "I have a client presentation at 10 AM and urgently need access. "
+            "My employee ID is EMP-4521 and my username is jsmith.\n\n"
+            "Please help ASAP.\n\n"
+            "Thanks,\nJohn Smith\nSales Department"
+        ),
+        context=(
+            "Employee is locked out due to password expiration. "
+            "The self-service reset portal requires the current (expired) password. "
+            "Standard procedure: verify identity via employee ID, perform "
+            "admin reset in Active Directory, and provide a temporary password."
+        ),
+        ground_truth_priority=TicketPriority.MEDIUM,
+        ground_truth_tier=SupportTier.L1,
+        ground_truth_resolution=(
+            "Verified employee identity using employee ID EMP-4521. "
+            "Performed administrative password reset in Active Directory. "
+            "Set temporary password and instructed user to change it on first login. "
+            "Confirmed user can access workstation successfully."
+        ),
+        sla_steps=3,
+        requires_kb_article=False,
+    ),
+    # ------------------------------------------------------------------
+    # ticket_002: Software Install — L2, medium priority, sla_steps=4
+    # ------------------------------------------------------------------
+    # WHY this is a step up from ticket_001:
+    # - Software installs require checking compatibility and dependencies
+    # - L2 agents need deeper technical skills than L1
+    # - 4-step SLA gives room for: search_kb → diagnose → apply_fix → respond
+    # - The Triage Agent must correctly route to L2 (not L1)
+    # - Still no KB article needed (software installs are routine)
+    Ticket(
+        ticket_id="ticket_002",
+        category=TicketCategory.SOFTWARE_INSTALL,
+        subject="Need Visual Studio Code installed with Python extensions",
+        sender="anewton@company.com",
+        body=(
+            "Hello,\n\n"
+            "I recently joined the Data Science team and need Visual Studio Code "
+            "installed on my workstation (Windows 11, Asset Tag WS-8834). "
+            "I also need the following extensions:\n"
+            "- Python (Microsoft)\n"
+            "- Jupyter\n"
+            "- Pylance\n\n"
+            "My manager (Dr. Sarah Chen) has already approved this software "
+            "request via ServiceNow ticket REQ-20240315.\n\n"
+            "Additionally, I need Python 3.11 installed and added to the "
+            "system PATH. I tried installing it myself but got a permissions "
+            "error — I don't have admin rights.\n\n"
+            "Thanks,\nAlex Newton\nData Science Team"
+        ),
+        context=(
+            "New employee needs development tools installed. Manager approval "
+            "is confirmed via ServiceNow. The workstation runs Windows 11 "
+            "with standard user permissions. IT has admin access to install "
+            "software via SCCM or remote desktop."
+        ),
+        ground_truth_priority=TicketPriority.MEDIUM,
+        ground_truth_tier=SupportTier.L2,
+        ground_truth_resolution=(
+            "Verified manager approval via ServiceNow REQ-20240315. "
+            "Connected to workstation WS-8834 via remote desktop. "
+            "Installed Visual Studio Code v1.87 from the approved software catalog. "
+            "Installed Python 3.11.8 and added to system PATH. "
+            "Installed requested VS Code extensions: Python, Jupyter, Pylance. "
+            "Verified Python interpreter is detected by VS Code. "
+            "Confirmed with user that all tools are working correctly."
+        ),
+        sla_steps=4,
+        requires_kb_article=False,
+    ),
+]
+def get_ticket_scenario(ticket_id: str) -> Optional[Ticket]:
+    """Get a specific ticket scenario by its ticket_id.
+    Args:
+        ticket_id: The unique ticket identifier (e.g. 'ticket_001').
+    Returns:
+        The matching Ticket, or None if not found.
+    """
+    for ticket in TICKET_SCENARIOS:
+        if ticket.ticket_id == ticket_id:
+            return ticket
+    return None
+def get_random_ticket_scenario(seed: Optional[int] = None) -> Ticket:
+    """Get a random ticket scenario, optionally seeded for reproducibility.
+    Args:
+        seed: Optional random seed for deterministic selection.
+    Returns:
+        A randomly selected Ticket from TICKET_SCENARIOS.
+    """
+    if seed is not None:
+        random.seed(seed)
+    return random.choice(TICKET_SCENARIOS)
+def get_all_ticket_scenarios() -> list[Ticket]:
+    """Return all ticket scenarios.
+    Returns:
+        The complete list of Ticket scenarios.
+    """
+    return TICKET_SCENARIOS
