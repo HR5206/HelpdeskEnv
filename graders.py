@@ -337,6 +337,68 @@ def grade_triage(ticket: Ticket, action: HelpdeskAction) -> StepResult:
             f"tier={correct_tier}"
         ),
     )
+
+def grade_efficiency(steps_taken: int, sla_steps: int, escalation_count: int) -> StepResult:
+    """Grade the efficiency of ticket resolution.
+    Measures two aspects of efficiency:
+    1. SLA Compliance — Did the agents resolve the ticket within the allowed steps?
+       - Perfect (1.0): steps_taken <= sla_steps
+       - Penalty: -0.25 per step over the SLA limit
+       - Floor: 0.0 (can't go negative)
+    2. Escalation Efficiency — Were escalations necessary?
+       - Perfect (1.0): no escalations (or the ticket required them)
+       - Penalty: -0.2 per escalation
+       - Floor: 0.0
+    Combined: sla_score × 0.6 + escalation_score × 0.4
+    This grader is NOT called per-step — it's called once when a ticket
+    is fully resolved, using the accumulated step count and escalation count.
+    Args:
+        steps_taken: Total steps used to resolve this ticket.
+        sla_steps: Maximum steps allowed by the SLA.
+        escalation_count: Number of times the ticket was escalated.
+    Returns:
+        StepResult with efficiency reward and breakdown feedback.
+    """
+    # --- SLA Compliance (60% weight) ---
+    if steps_taken <= sla_steps:
+        sla_score = 1.0
+        sla_fb = f"✅ Within SLA ({steps_taken}/{sla_steps} steps used)"
+    else:
+        overage = steps_taken - sla_steps
+        sla_score = max(0.0, 1.0 - (overage * 0.25))
+        sla_fb = (
+            f"⚠️ SLA breached by {overage} step(s) "
+            f"({steps_taken}/{sla_steps} steps used, score: {sla_score:.2f})"
+        )
+    # --- Escalation Efficiency (40% weight) ---
+    if escalation_count == 0:
+        escalation_score = 1.0
+        escalation_fb = "✅ No escalations needed"
+    else:
+        escalation_score = max(0.0, 1.0 - (escalation_count * 0.2))
+        escalation_fb = (
+            f"⚠️ {escalation_count} escalation(s) "
+            f"(score: {escalation_score:.2f})"
+        )
+    # --- Combined efficiency reward ---
+    final_reward = round(
+        (sla_score * 0.6) + (escalation_score * 0.4),
+        2
+    )
+    feedback = (
+        f"Efficiency Score Breakdown:\n"
+        f"  SLA Compliance (60%): {sla_score:.2f} — {sla_fb}\n"
+        f"  Escalation Efficiency (40%): {escalation_score:.2f} — {escalation_fb}\n"
+        f"{'_' * 47}\n"
+        f"  Final Efficiency Score: {final_reward:.2f}"
+    )
+    return StepResult(
+        task_id="efficiency",
+        reward=final_reward,
+        done=False,
+        feedback=feedback,
+        correct_answer=f"SLA={sla_steps} steps, minimize escalations",
+    )
     
 # ============================================================================
 # Quick Validation (run with: python graders.py)
