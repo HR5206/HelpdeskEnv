@@ -1,14 +1,18 @@
 spec_version: "1.0"
-name: EmailEnv
-id: emailenv
+name: HelpdeskEnv
+id: helpdeskenv
 type: space
-version: "0.1.0"
-description: "An OpenEnv-compliant environment for professional email triage and customer support, including spam detection, prioritization, and reply generation."
+version: "2.0.0"
+description: >-
+  A multi-agent IT Helpdesk OpenEnv environment featuring tiered support
+  (Triage → L1 → L2 → L3), a persistent Knowledge Base for self-improvement,
+  SLA-driven long-horizon planning, and role-based escalation workflows.
+  Also includes EmailEnv tasks for spam detection, prioritization, and reply generation.
 license: Apache-2.0
 homepage: "https://huggingface.co/spaces/Harishraghav-05/emailenv"
 repository: "https://github.com/HR5206/emailenv"
 maintainers:
-  - name: "EmailEnv Maintainers"
+  - name: "HelpdeskEnv Team"
     email: "harishraghav256@gmail.com"
 runtime:
   type: docker
@@ -16,12 +20,19 @@ runtime:
   port: 7860
 tags:
   - openenv
+  - multi-agent
+  - helpdesk
+  - self-improving
+  - knowledge-base
   - email
   - spam-detection
   - customer-support
   - prioritization
   - reply-generation
+  - sla-compliance
+  - tiered-support
 tasks:
+  # EmailEnv tasks (Round 1)
   - id: spam_classification
     name: Spam Classification
     description: "Classify an incoming email as spam or not_spam."
@@ -32,7 +43,7 @@ tasks:
       function: grade_spam
   - id: email_prioritization
     name: Email Prioritization
-    description: "Assign a priority level (high, medium, low) to an incoming email."
+    description: "Assign a priority level (low/medium/high/critical) to an email."
     difficulty: medium
     grader:
       type: python
@@ -40,9 +51,34 @@ tasks:
       function: grade_priority
   - id: reply_generation
     name: Reply Generation
-    description: "Draft a polite, relevant, and appropriately-lengthed reply to an email."
+    description: "Draft a polite, relevant reply to an email."
     difficulty: hard
     grader:
       type: python
       path: graders.py
       function: grade_reply
+  # HelpdeskEnv tasks (Round 2)
+  - id: helpdesk_triage
+    name: Helpdesk Ticket Triage
+    description: "Classify a ticket by category, priority, and support tier using the Triage Agent."
+    difficulty: medium
+    grader:
+      type: python
+      path: graders.py
+      function: grade_triage
+  - id: helpdesk_resolution
+    name: Helpdesk Ticket Resolution
+    description: "Resolve IT tickets through multi-agent L1/L2/L3 collaboration within SLA constraints."
+    difficulty: hard
+    grader:
+      type: python
+      path: graders.py
+      function: grade_efficiency
+  - id: helpdesk_kb_contribution
+    name: Knowledge Base Contribution
+    description: "Write detailed KB articles for novel issues to enable self-improvement across episodes."
+    difficulty: hard
+    grader:
+      type: python
+      path: graders.py
+      function: grade_kb_contribution
