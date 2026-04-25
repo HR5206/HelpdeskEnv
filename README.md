@@ -1,264 +1,258 @@
 ---
-title: EmailEnv
-emoji: 📧
-colorFrom: blue
-colorTo: green
+title: HelpdeskEnv
+emoji: 🎫
+colorFrom: indigo
+colorTo: purple
 sdk: docker
 pinned: false
 license: apache-2.0
 tags:
   - openenv
   - reinforcement-learning
+  - multi-agent
+  - helpdesk
+  - self-improving
+  - knowledge-base
   - email
-  - spam-detection
-  - reply-generation
   - python
 ---
 
-# EmailEnv
+# 🎫 HelpdeskEnv
 
-An **OpenEnv**-compatible RL environment where an AI agent triages incoming
-emails and performs three tasks in sequence: **spam detection**, **priority
-assignment**, and **reply drafting**. Graders are **deterministic** and based on
-hand‑written rubrics, giving **partial-credit reward signals** in the range
+A **multi-agent IT Helpdesk** OpenEnv environment where specialized AI agents
+collaborate to resolve IT support tickets through **tiered escalation**,
+**Knowledge Base self-improvement**, and **SLA-driven planning**.
 
-## Motivation
-
-Email triage and customer support are high‑value, real‑world workflows that
-human agents perform every day. Training RL agents in this setting teaches them
-to:
-
-- Filter spam and scams
-- Draft polite, on‑policy customer support replies
-
-Skills learned here transfer directly to real customer support tooling and
-agentic assistants.
+> Built for the [OpenEnv Hackathon](https://openenv.org) — Round 2 evolution of EmailEnv.
 
 ---
 
-## Action & Observation Spaces
+## 🏆 Hackathon Themes Addressed
 
-### Action Space
-
-Actions are represented by the `Action` model in `models.py`:
-
-| Field        | Type                                           | Description |
-|--------------|------------------------------------------------|-------------|
-| `type`       | `"classify_spam" \| "set_priority" \| "generate_reply" \| "skip"` | What the agent wants to do for the current email |
-| `is_spam`    | `bool \| None`                                 | Required when `type == "classify_spam"` |
-| `priority`   | `"low" \| "medium" \| "high" \| None`          | Required when `type == "set_priority"` |
-| `reply_text` | `str \| None`                                  | Used when `type == "generate_reply"`; if omitted, the environment may auto‑generate a reply |
-
-### Observation Space
-
-Observations are represented by the `Observation` model in `models.py`:
-
-| Field             | Type   | Description |
-|-------------------|--------|-------------|
-| `email`           | `Email \| None` | The current email object, or `null` when the inbox is exhausted |
-| `task`            | `"spam_classification" \| "email_prioritization" \| "reply_generation"` | Which sub‑task the agent is performing |
-| `step_index`      | `int`  | Index of the current step within the episode |
-| `total_steps`     | `int`  | Total number of emails in the episode |
-| `remaining_emails`| `int`  | How many emails are left to process |
-
-The `Email` model includes fields like `id`, `subject`, `body`, `sender`,
-`timestamp`, and `metadata` (which holds private ground‑truth labels used by the
-graders).
-
-### State Space
-
-Environment state is tracked by the `EnvState` model:
-
-| Field           | Type      | Description |
-|-----------------|-----------|-------------|
-| `current_task`  | `EmailTask \| None` | The email task currently being solved |
-| `task_number`   | `int`     | Index of the active task in the episode (0–2) |
-| `total_reward`  | `float`   | Cumulative reward so far |
-| `is_done`       | `bool`    | Whether the episode has ended |
-| `history`       | `list[StepResult]` | All past graded steps in the episode |
+| Theme | How It's Implemented |
+|-------|---------------------|
+| **Multi-Agent Interaction** | 4 agents (Triage, L1, L2, L3) with role-based actions and handoffs |
+| **Long-Horizon Planning** | SLA step budgets force efficient multi-step resolution strategies |
+| **World Modeling (Knowledge Base)** | Persistent KB with keyword search — agents query before acting |
+| **Self-Improving Systems** | L3 writes KB articles → future episodes have more knowledge → scores improve |
 
 ---
 
-## Tasks
-
-| ID                         | Difficulty | Domain            | What the agent must do |
-|----------------------------|-----------|-------------------|-------------------------|
-| `spam_classification`      | 🟢 Easy   | Spam Detection    | Decide whether an email is **spam** or **not spam** |
-| `email_prioritization`     | 🟡 Medium | Prioritisation    | Assign priority: `low`, `medium`, or `high` |
-| `reply_generation`         | 🔴 Hard   | Reply Drafting    | Draft a professional, on‑policy support reply |
-
-Internally, each episode walks through three `EmailTask` scenarios (spam →
-priority → reply) and maintains a running total reward.
-
----
-
-## Reward System
-
-Each step is graded by deterministic rubric‑based graders in `graders.py`.
-Rewards are always in `[0.0, 1.0]` and support partial credit.
-
-In simplified form:
+## 🏗️ Architecture
 
 ```text
-Reward = average(criterion_scores)
-criterion_scores ∈ {0.0, 1.0}
+                    ┌─────────────┐
+     Ticket ───────►│   TRIAGE    │ classify: category, priority, tier
+                    └──────┬──────┘
+                           │ route
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+         ┌────────┐   ┌────────┐   ┌────────┐
+         │   L1   │   │   L2   │   │   L3   │
+         │ Simple │   │ Medium │   │ Expert │
+         └───┬────┘   └───┬────┘   └───┬────┘
+             │            │            │
+        search_kb    apply_fix    apply_complex_fix
+        apply_sol    respond      write_kb_entry ◄── SELF-IMPROVEMENT
+        respond      escalate↗   respond
+        escalate↗
+              │            │            │
+              └────────────┴────────────┘
+                           │
+                    ┌──────▼──────┐
+                    │ Knowledge   │  Persists across episodes
+                    │    Base     │  2 seed + agent-created articles
+                    └─────────────┘
 ```
 
-### Spam Grader (Easy)
+### Agent Workflow Per Ticket
 
-- `label_correct` – 1.0 if the predicted spam / not‑spam label matches ground truth
+1. **Triage Agent** classifies the ticket → routes to L1/L2/L3
+2. **Support Agent** searches KB → applies fix → responds to customer
+3. **L3 only**: writes KB articles for novel issues
+4. `respond_to_customer` resolves the ticket → moves to next
 
-### Priority Grader (Medium)
+### Self-Improvement Loop
 
-- `exact_priority_match` – 1.0 if the predicted priority equals ground truth
-- `off_by_one` – partial credit when the prediction is close (e.g. `medium` vs `high`)
-
-### Reply Grader (Hard)
-
-The reply grader combines multiple binary criteria:
-
-- `relevance` – reply addresses the actual issue
-- `tone` – polite, professional, on‑brand
-- `completeness` – all key points covered
-- `helpfulness` – offers concrete next steps or solutions
-
-The episode ends when all three tasks are completed. Total reward is the sum of
-per‑task rewards.
+```text
+Episode 1: KB=2 seed entries → L3 solves novel tickets from scratch → writes 3 KB articles
+Episode 2: KB=5 entries → L1/L2 find solutions in KB → resolve faster → higher scores
+Episode 5: KB=7+ entries → most tickets have KB matches → near-optimal performance
+```
 
 ---
 
-## Baseline Scores
+## 📋 Tasks (6 Total)
 
-Example scores obtained with a simple `gpt-5-nano`‑based agent (deterministic
-prompts, temperature 0.0). These are indicative only – your results may differ.
+### Round 1 — EmailEnv (preserved)
 
-| Task                    | Heuristic Baseline | gpt-5-nano Baseline |
-|-------------------------|:------------------:|:-------------------:|
-| `spam_classification`   | 1.00               | **1.00**             |
-| `email_prioritization`  | 1.00               | **1.00**             |
-| `reply_generation`      | 0.70               | **0.70**             |
-| **Average**             | 0.90               | **0.90**             |
+| Task | Difficulty | Grader | Scoring |
+|------|-----------|--------|---------|
+| Spam Classification | 🟢 Easy | `grade_spam` | Binary: correct/incorrect |
+| Email Prioritization | 🟡 Medium | `grade_priority` | Distance-based: 4 levels (low/medium/high/critical) |
+| Reply Generation | 🔴 Hard | `grade_reply` | Weighted: politeness 40% + length 30% + relevance 30% |
+
+### Round 2 — HelpdeskEnv (new)
+
+| Task | Difficulty | Grader | Scoring |
+|------|-----------|--------|---------|
+| Ticket Triage | 🟡 Medium | `grade_triage` | Category 40% + priority 30% + tier 30% |
+| Ticket Resolution | 🔴 Hard | `grade_efficiency` | SLA compliance 60% + escalation efficiency 40% |
+| KB Contribution | 🔴 Hard | `grade_kb_contribution` | Relevance 35% + length 30% + specificity 35% |
 
 ---
 
-## Setup & Usage
+## 🚀 Quick Start
 
 ### Install
-
-For local development, install dependencies from `requirements.txt`:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run the Server
-
-Start the FastAPI server on port 7860:
+### Run Integration Tests
 
 ```bash
-uvicorn server:app --host 0.0.0.0 --port 7860
+python test_integration.py
 ```
 
-### HTTP API
+### Run the Helpdesk Inference (no API key needed)
 
 ```bash
-# Reset (no body required)
-curl -X POST http://localhost:7860/reset \
-  -H "Content-Type: application/json" -d "{}"
-
-# Reset with explicit task hint (currently ignored but logged)
-curl -X POST http://localhost:7860/reset \
-  -H "Content-Type: application/json" \
-  -d '{"task": "spam_classification"}'
-
-# Step – classify spam
-curl -X POST http://localhost:7860/step \
-  -H "Content-Type: application/json" \
-  -d '{"type": "classify_spam", "is_spam": true}'
-
-# State
-curl http://localhost:7860/state
-
-# Health
-curl http://localhost:7860/health
-```
-
-### Run Inference Agent
-
-`inference.py` contains a simple OpenAI‑powered loop that interacts with the
-environment.
-
-```bash
-export API_BASE_URL=https://api.openai.com/v1
-export MODEL_NAME=gpt-5-nano
-export OPENAI_API_KEY=sk-...
 python inference.py
 ```
 
-On Windows PowerShell:
+This runs:
+- 3 EmailEnv episodes (spam, priority, reply)
+- 3 HelpdeskEnv multi-agent episodes with self-improvement demo
 
-```powershell
-$Env:API_BASE_URL = "https://api.openai.com/v1"
-$Env:MODEL_NAME = "gpt-5-nano"
-$Env:OPENAI_API_KEY = "sk-..."
-python inference.py
-```
-
-### Docker / Hugging Face Spaces
-
-The repository includes a `Dockerfile` suitable for Spaces:
+### Start the Server
 
 ```bash
-docker build -t emailenv .
-docker run -p 7860:7860 \
-  -e API_BASE_URL=https://api.openai.com/v1 \
-  -e MODEL_NAME=gpt-5-nano \
-  -e OPENAI_API_KEY=sk-... \
-  emailenv
+uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
-
-On Hugging Face, `openenv.yaml` points Spaces at this Dockerfile and exposes
-port 7860.
 
 ---
 
-## Logging Format
+## 🔌 API Endpoints
 
-The FastAPI server logs structured events for easier analysis:
+### EmailEnv (Round 1)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/reset` | POST | Reset email environment |
+| `/step` | POST | Submit email action |
+| `/state` | GET | Get email env state |
+| `/health` | GET | Health check |
+| `/metadata` | GET | Environment metadata |
+| `/schema` | GET | Action/observation schemas |
+| `/tasks` | GET | List all 6 tasks |
+
+### HelpdeskEnv (Round 2)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/helpdesk/reset` | POST | Start new episode `{"seed": 42, "num_tickets": 3}` |
+| `/helpdesk/step` | POST | Submit agent action |
+| `/helpdesk/state` | GET | Get current helpdesk state |
+| `/helpdesk/kb` | GET | KB statistics and entries |
+| `/helpdesk/kb/search?q=password` | GET | Search the Knowledge Base |
+
+### Example: Helpdesk API Flow
+
+```bash
+# 1. Reset
+curl -X POST http://localhost:7860/helpdesk/reset \
+  -H "Content-Type: application/json" \
+  -d '{"seed": 42, "num_tickets": 2}'
+
+# 2. Triage
+curl -X POST http://localhost:7860/helpdesk/step \
+  -H "Content-Type: application/json" \
+  -d '{"ticket_id":"ticket_001","agent_role":"TRIAGE","action_type":"triage","action_value":"{\"category\":\"password_reset\",\"priority\":\"medium\",\"tier\":\"L1\"}"}'
+
+# 3. Check state
+curl http://localhost:7860/helpdesk/state
+
+# 4. Search KB
+curl "http://localhost:7860/helpdesk/kb/search?q=password+expired"
+```
+
+---
+
+## 📁 Project Structure
 
 ```text
-API_BASE_URL : https://api.openai.com/v1
-MODEL_NAME   : gpt-5-nano
-============================================================
-[START] task=spam_classification env=emailenv model=gpt-5-nano
-[STEP] step=spam_001 action=type=classify_spam reward=1.00 done=false error=null
-...
+HelpdeskEnv/
+├── models.py              # All Pydantic models (Email + Helpdesk)
+├── tasks.py               # 9 email scenarios + 5 ticket scenarios
+├── graders.py             # 6 graders (spam, priority, reply, triage, efficiency, KB)
+├── knowledge_base.py      # KBEntry model + KnowledgeBase class (persistent)
+├── helpdeskenv_class.py   # HelpdeskEnv: reset/step/state with multi-agent routing
+├── emailenv_class.py      # EmailEnv: original Round 1 environment
+├── heuristics.py          # Keyword-based fallback agents (no API key needed)
+├── inference.py           # LLM + heuristic inference loops
+├── test_integration.py    # 10 end-to-end integration tests
+├── agents/
+│   ├── __init__.py        # Agent prompt exports
+│   ├── triage.py          # Triage Agent system prompt + builder
+│   ├── l1_agent.py        # L1 Agent prompt (KB-assisted)
+│   ├── l2_agent.py        # L2 Agent prompt (independent diagnosis)
+│   └── l3_agent.py        # L3 Agent prompt (KB article writing)
+├── server/
+│   ├── __init__.py
+│   └── app.py             # FastAPI server with Email + Helpdesk endpoints
+├── openenv.yaml           # OpenEnv manifest (v2.0.0, 6 tasks)
+├── requirements.txt       # Runtime dependencies
+├── Dockerfile             # Container build for HF Spaces
+└── README.md              # This file
 ```
-
-These logs make it easy to replay episodes, compute statistics, and compare
-agent variants.
 
 ---
 
-## Project Structure
+## 🧪 Reward System
+
+All rewards are in `[0.0, 1.0]` with partial credit.
+
+### Per-Ticket Combined Reward
+
+When a ticket is resolved, the combined reward is:
 
 ```text
-EmailEnv/
-├── models.py          # Pydantic Action, Observation, State, Reward, EmailTask, EnvState
-├── tasks.py           # Task definitions for spam / priority / reply
-├── graders.py         # Deterministic rubric-based graders
-├── emailenv_class.py  # Core EmailEnv class (reset / step / state)
-├── server.py          # FastAPI app: /web /reset /step /state /health
-├── client.py          # Optional HTTP client helpers
-├── inference.py       # OpenAI-powered agent loop
-├── openenv.yaml       # OpenEnv manifest (spec_version: 1)
-├── pyproject.toml     # Project metadata (not required for Docker build)
-├── requirements.txt   # Runtime dependencies
-└── Dockerfile         # Container build (used by HF Spaces)
+ticket_reward = resolution_quality × 0.30
+              + response_quality   × 0.20
+              + efficiency         × 0.20
+              + triage_accuracy    × 0.15
+              + kb_contribution    × 0.15
+```
+
+### Self-Improvement Metric
+
+KB growth across episodes is tracked via `kb.stats()`:
+
+```json
+{
+  "total_entries": 5,
+  "seed_entries": 2,
+  "agent_created_entries": 3,
+  "total_usage": 12,
+  "categories_covered": ["password_reset", "software_install", "network_issue"]
+}
 ```
 
 ---
 
-## License
+## 🐳 Docker / Hugging Face Spaces
+
+```bash
+docker build -t helpdeskenv .
+docker run -p 7860:7860 helpdeskenv
+```
+
+On Hugging Face, `openenv.yaml` points Spaces at the Dockerfile and exposes port 7860.
+
+---
+
+## 📄 License
 
 Apache-2.0
