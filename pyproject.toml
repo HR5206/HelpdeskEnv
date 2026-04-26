@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "emailenv"
-version = "0.1.0"
-description = "EmailEnv OpenEnv environment for professional email triage and customer support."
+name = "helpdeskenv"
+version = "2.1.0"
+description = "Multi-agent IT helpdesk environment where Triage, L1, L2, and L3 agents collaborate."
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [
-    { name = "EmailEnv Contributors", email = "support@example.com" }
+    { name = "Harish Raghav", email = "harishraghav256@gmail.com" }
 ]
 dependencies = [
     "pydantic>=2.6.0",
@@ -21,27 +21,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-inference = [
-    "openai>=1.0.0"
-]
 dev = [
     "pytest",
     "httpx"
 ]
 
 [project.urls]
-Homepage = "https://huggingface.co/spaces/your-organization/emailenv"
-Repository = "https://github.com/HR5206/emailenv"
-
+Homepage = "https://huggingface.co/spaces/Harishraghav-05/helpdesk_env"
+Repository = "https://github.com/HR5206/HelpdeskEnv"
 
 [project.scripts]
-server = "server.app:main"
-emailenv-server = "server.app:main"
+helpdeskenv-server = "server.app:main"
 
-[project.entry-points."emailenv.graders"]
-spam_classification = "graders:grade_spam"
-email_prioritization = "graders:grade_priority"
-reply_generation = "graders:grade_reply"
+[project.entry-points."helpdeskenv.graders"]
+helpdesk_triage = "graders:grade_triage"
+helpdesk_resolution = "graders:grade_efficiency"
+helpdesk_kb_contribution = "graders:grade_kb_contribution"
 
 [tool.pyright]
 extraPaths = ["."]
