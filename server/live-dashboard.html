@@ -383,6 +383,35 @@ async function fetchState(){
     ti.innerHTML = '<span>No active ticket.</span>';
     setSLA(0,0);
   }
+  
+  // Parse and update reward breakdown from history
+  if (s.history && s.history.length > 0) {
+    for (let i = s.history.length - 1; i >= 0; i--) {
+      const step = s.history[i];
+      if (step.feedback && step.feedback.includes("Composite Reward Breakdown:")) {
+        const fb = step.feedback;
+        const parseLine = (name) => {
+          const match = fb.match(new RegExp(name + "\\s+\\(.*?\\):\\s+([0-9.]+)"));
+          return match ? parseFloat(match[1]) : 0;
+        };
+        document.getElementById('rw-triage').style.width = (parseLine("Triage") * 100) + '%';
+        document.getElementById('rv-triage').textContent = parseLine("Triage").toFixed(2);
+        document.getElementById('rw-resolution').style.width = (parseLine("Resolution") * 100) + '%';
+        document.getElementById('rv-resolution').textContent = parseLine("Resolution").toFixed(2);
+        document.getElementById('rw-response').style.width = (parseLine("Response") * 100) + '%';
+        document.getElementById('rv-response').textContent = parseLine("Response").toFixed(2);
+        document.getElementById('rw-efficiency').style.width = (parseLine("Efficiency") * 100) + '%';
+        document.getElementById('rv-efficiency').textContent = parseLine("Efficiency").toFixed(2);
+        document.getElementById('rw-kb').style.width = (parseLine("KB") * 100) + '%';
+        document.getElementById('rv-kb').textContent = parseLine("KB").toFixed(2);
+        
+        const compMatch = fb.match(/Composite Score:\s+([0-9.]+)/);
+        if(compMatch) document.getElementById('rv-composite').textContent = parseFloat(compMatch[1]).toFixed(2);
+        break;
+      }
+    }
+  }
+
   // Check for new log entries
   if(s.history_length > lastHistLen){
     lastHistLen = s.history_length;
