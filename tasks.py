@@ -259,6 +259,172 @@ TICKET_SCENARIOS: list[Ticket] = [
         sla_steps=6,
         requires_kb_article=True,
     ),
+        # ------------------------------------------------------------------
+    # ticket_006: Hardware Failure — L2, medium, sla_steps=5
+    # ------------------------------------------------------------------
+    # WHY this is moderate difficulty:
+    # - Printer/scanner hardware issues are common but need diagnostics
+    # - L2 must troubleshoot connectivity and driver issues
+    # - Affects department workflow (not individual)
+    # - 5-step SLA: search_kb → diagnose → apply_fix → respond
+    # - KB article useful for future printer issues
+    Ticket(
+        ticket_id="ticket_006",
+        category=TicketCategory.HARDWARE_FAILURE,
+        subject="Office printer not responding to print jobs from all workstations",
+        sender="operations@company.com",
+        body=(
+            "Hello IT,\n\n"
+            "The HP LaserJet Enterprise M555 printer in Conference Room B is not "
+            "accepting print jobs from any workstation. When users try to print, "
+            "the job sits in the queue indefinitely.\n\n"
+            "Details:\n"
+            "- Printer IP: 192.168.1.45\n"
+            "- Print jobs are queued but never processed\n"
+            "- The printer's web interface (192.168.1.45:80) shows 'Ready' status\n"
+            "- Error code on display: 'Unexpected error. Service required.'\n"
+            "- Last updated: 3 days ago (firmware update?)\n"
+            "- Approx 15 people unable to print — blocking document prep work\n\n"
+            "Can this be fixed urgently?\n\n"
+            "Thanks,\nSarah Mitchell\nOperations Manager"
+        ),
+        context=(
+            "Enterprise printer malfunction affecting a department. The printer "
+            "shows 'Ready' on its web interface but displays an error. This could be "
+            "a firmware issue, a jammed tray sensor, or a network communication problem. "
+            "L2 should search for printer error code solutions, power-cycle the device, "
+            "and check network connectivity. May require remote troubleshooting via "
+            "printer's web interface or escalation to L3 if hardware failure confirmed."
+        ),
+        ground_truth_priority=TicketPriority.MEDIUM,
+        ground_truth_tier=SupportTier.L2,
+        ground_truth_resolution=(
+            "Connected to printer's web interface and reviewed logs — error pointed to "
+            "firmware crash during update 3 days ago. Rebooted printer via web interface. "
+            "Cleared print queue. Reinstalled printer driver on test workstation. "
+            "Sent test print job — successful. Cleared print queue on all workstations "
+            "and verified printer accepts jobs from multiple users. "
+            "All jobs printing normally. Created KB article documenting HP M555 firmware "
+            "recovery procedure."
+        ),
+        sla_steps=5,
+        requires_kb_article=True,
+    ),
+        # ------------------------------------------------------------------
+    # ticket_007: License Compliance — L3, high, sla_steps=6
+    # ------------------------------------------------------------------
+    # WHY this is challenging:
+    # - Involves legal/compliance risk (not just technical)
+    # - Requires knowledge of license types and audit processes
+    # - "Other" category — doesn't fit standard IT playbooks
+    # - High priority due to audit implications
+    # - Longer SLA because diagnosis involves multiple stakeholders
+    # - KB article important for future license audits
+    Ticket(
+        ticket_id="ticket_007",
+        category=TicketCategory.OTHER,
+        subject="Compliance Alert: Unlicensed software detected on enterprise machines",
+        sender="compliance@company.com",
+        body=(
+            "URGENT COMPLIANCE MATTER:\n\n"
+            "Our quarterly software audit tool has flagged 47 machines running "
+            "unlicensed copies of Adobe Creative Suite (Photoshop, After Effects, etc.). "
+            "This creates legal exposure and violates our Microsoft Enterprise Agreement.\n\n"
+            "Details:\n"
+            "- Affected machines: Primarily in Design and Marketing departments\n"
+            "- Software: Adobe Creative Suite versions 2023 and 2024\n"
+            "- License status: Unlicensed (not in our volume license agreement)\n"
+            "- Risk: Potential audit penalties + legal liability\n"
+            "- Audit deadline: Friday (3 days)\n\n"
+            "We need to either:\n"
+            "1. Obtain proper licenses immediately, OR\n"
+            "2. Uninstall the software before the audit\n\n"
+            "The design teams are currently using this software for active projects. "
+            "We need a solution that doesn't halt production.\n\n"
+            "- Legal/Compliance Team"
+        ),
+        context=(
+            "Software license compliance issue with legal/business implications. "
+            "This is complex because it requires coordination between IT, procurement, "
+            "and legal. The L3 agent must: (1) document current license status, "
+            "(2) identify compliant alternatives or procurement options, "
+            "(3) communicate timeline to stakeholders, (4) implement solution. "
+            "This tests agent reasoning beyond pure technical skills."
+        ),
+        ground_truth_priority=TicketPriority.HIGH,
+        ground_truth_tier=SupportTier.L3,
+        ground_truth_resolution=(
+            "Contacted procurement to request emergency Adobe Creative Cloud Enterprise "
+            "license quotes for 47 users. Coordinated with Legal to document current "
+            "installation timestamps and compliance status. Implemented staged approach: "
+            "(1) Provisioned 20 Adobe Creative Cloud licenses via subscription (Friday), "
+            "(2) Transitioned 20 Design team members to licensed version by EOB Thursday, "
+            "(3) Identified free/open-source alternatives (GIMP, DaVinci Resolve) for "
+            "remaining 27 machines pending budget approval. Created KB article documenting "
+            "compliance audit response procedures and software license management workflow. "
+            "Scheduled recurring quarterly license audits."
+        ),
+        sla_steps=6,
+        requires_kb_article=True,
+    ),
+        # ------------------------------------------------------------------
+    # ticket_008: VPN Access Issue — L2, medium, sla_steps=4
+    # ------------------------------------------------------------------
+    # WHY this is good difficulty:
+    # - VPN connectivity is common but requires network knowledge
+    # - L2 should understand VPN client setup, certificates, and DNS
+    # - Affects remote worker productivity (timely resolution important)
+    # - 4-step SLA: search_kb → diagnose → apply_fix → respond
+    # - No KB article required (standard troubleshooting)
+    Ticket(
+        ticket_id="ticket_008",
+        category=TicketCategory.NETWORK_ISSUE,
+        subject="VPN client won't connect after laptop OS update to Windows 11 Pro",
+        sender="jchen@company.com",
+        body=(
+            "Hi IT Support,\n\n"
+            "My VPN client stopped working after I updated my laptop from Windows 10 "
+            "to Windows 11 Pro yesterday. I'm working remotely today and can't access "
+            "the company network.\n\n"
+            "Details:\n"
+            "- VPN Client: Cisco AnyConnect v4.10.07046\n"
+            "- Error message: 'Certificate verification failed'\n"
+            "- OS: Windows 11 Pro (Build 22621)\n"
+            "- No VPN access for ~8 hours already\n"
+            "- Other remote workers are reporting same issue after OS upgrades\n\n"
+            "I've tried:\n"
+            "- Restarting the VPN client\n"
+            "- Rebooting the laptop\n"
+            "- Uninstalling and reinstalling AnyConnect (same error)\n\n"
+            "I have deadline deliverables that require company network access. "
+            "Please help ASAP.\n\n"
+            "Thanks,\nJason Chen\nEngineering"
+        ),
+        context=(
+            "VPN client incompatibility with Windows 11 after OS upgrade. "
+            "Certificate verification failure suggests certificate store issue "
+            "or TLS/SSL compatibility problem with new Windows 11 build. "
+            "Root cause: Cisco AnyConnect v4.10.x is not fully compatible with "
+            "Windows 11 Pro (Build 22621). L2 should check KB for Windows 11 "
+            "VPN compatibility, update AnyConnect to v4.12+ (supports Windows 11), "
+            "and verify certificate chain. May require updating device certificates."
+        ),
+        ground_truth_priority=TicketPriority.MEDIUM,
+        ground_truth_tier=SupportTier.L2,
+        ground_truth_resolution=(
+            "Identified AnyConnect v4.10 incompatibility with Windows 11 Build 22621. "
+            "Advised user to update to Cisco AnyConnect v4.12.04 which includes Windows 11 "
+            "support. Provided download link and installation instructions. "
+            "User successfully installed update. Cleared VPN cache files "
+            "(C:\\Users\\[user]\\AppData\\Local\\Cisco\\Cisco AnyConnect). "
+            "Re-imported device certificate using certificate management tool. "
+            "Tested VPN connection — successful. User regained network access. "
+            "Escalated to procurement to push AnyConnect v4.12+ as standard build "
+            "for Windows 11 rollout."
+        ),
+        sla_steps=4,
+        requires_kb_article=False,
+    ),
 ]
 def get_ticket_scenario(ticket_id: str) -> Optional[Ticket]:
     """Get a specific ticket scenario by its ticket_id.

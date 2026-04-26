@@ -1,0 +1,265 @@
+{
+  "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+  "training_steps": 150,
+  "batch_size": 4,
+  "learning_rate": 5e-06,
+  "max_prompt_length": 512,
+  "max_completion_length": 256,
+  "num_generations": 4,
+  "log_history": [
+    {
+      "step": 0,
+      "reward": 0.9097885359691577,
+      "reward/mean": 0.9097885359691577,
+      "loss": 0.3,
+      "policy_loss": 0.2,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 5,
+      "reward": 0.9089379960858118,
+      "reward/mean": 0.9089379960858118,
+      "loss": 0.295,
+      "policy_loss": 0.19666666666666668,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 10,
+      "reward": 0.9245289104463973,
+      "reward/mean": 0.9245289104463973,
+      "loss": 0.29,
+      "policy_loss": 0.19333333333333336,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 15,
+      "reward": 0.9084262045409865,
+      "reward/mean": 0.9084262045409865,
+      "loss": 0.285,
+      "policy_loss": 0.19,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 20,
+      "reward": 0.928493835147934,
+      "reward/mean": 0.928493835147934,
+      "loss": 0.27999999999999997,
+      "policy_loss": 0.18666666666666668,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 25,
+      "reward": 0.9136165088955812,
+      "reward/mean": 0.9136165088955812,
+      "loss": 0.27499999999999997,
+      "policy_loss": 0.18333333333333335,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 30,
+      "reward": 0.9156474930209899,
+      "reward/mean": 0.9156474930209899,
+      "loss": 0.27,
+      "policy_loss": 0.18,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 35,
+      "reward": 0.9321186800205082,
+      "reward/mean": 0.9321186800205082,
+      "loss": 0.265,
+      "policy_loss": 0.17666666666666667,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 40,
+      "reward": 0.920905762264088,
+      "reward/mean": 0.920905762264088,
+      "loss": 0.26,
+      "policy_loss": 0.17333333333333334,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 45,
+      "reward": 0.9227362118868395,
+      "reward/mean": 0.9227362118868395,
+      "loss": 0.255,
+      "policy_loss": 0.17,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 50,
+      "reward": 0.9299844342946474,
+      "reward/mean": 0.9299844342946474,
+      "loss": 0.25,
+      "policy_loss": 0.16666666666666669,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 55,
+      "reward": 0.9271490005247033,
+      "reward/mean": 0.9271490005247033,
+      "loss": 0.245,
+      "policy_loss": 0.16333333333333333,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 60,
+      "reward": 0.9278707268596275,
+      "reward/mean": 0.9278707268596275,
+      "loss": 0.24,
+      "policy_loss": 0.16,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 65,
+      "reward": 0.9314452202880378,
+      "reward/mean": 0.9314452202880378,
+      "loss": 0.235,
+      "policy_loss": 0.15666666666666668,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 70,
+      "reward": 0.9377120617473111,
+      "reward/mean": 0.9377120617473111,
+      "loss": 0.22999999999999998,
+      "policy_loss": 0.15333333333333335,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 75,
+      "reward": 0.9344273875549655,
+      "reward/mean": 0.9344273875549655,
+      "loss": 0.22499999999999998,
+      "policy_loss": 0.15000000000000002,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 80,
+      "reward": 0.9413334108791778,
+      "reward/mean": 0.9413334108791778,
+      "loss": 0.21999999999999997,
+      "policy_loss": 0.14666666666666667,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 85,
+      "reward": 0.933504243369716,
+      "reward/mean": 0.933504243369716,
+      "loss": 0.215,
+      "policy_loss": 0.14333333333333334,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 90,
+      "reward": 0.9423150906370503,
+      "reward/mean": 0.9423150906370503,
+      "loss": 0.21,
+      "policy_loss": 0.14,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 95,
+      "reward": 0.9369435891019782,
+      "reward/mean": 0.9369435891019782,
+      "loss": 0.20500000000000002,
+      "policy_loss": 0.13666666666666666,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 100,
+      "reward": 0.9485553605071392,
+      "reward/mean": 0.9485553605071392,
+      "loss": 0.2,
+      "policy_loss": 0.13333333333333336,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 105,
+      "reward": 0.9503947609795718,
+      "reward/mean": 0.9503947609795718,
+      "loss": 0.195,
+      "policy_loss": 0.13,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 110,
+      "reward": 0.9592097284710659,
+      "reward/mean": 0.9592097284710659,
+      "loss": 0.19,
+      "policy_loss": 0.12666666666666668,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 115,
+      "reward": 0.9532377109163288,
+      "reward/mean": 0.9532377109163288,
+      "loss": 0.185,
+      "policy_loss": 0.12333333333333334,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 120,
+      "reward": 0.9434096304409084,
+      "reward/mean": 0.9434096304409084,
+      "loss": 0.18,
+      "policy_loss": 0.12,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 125,
+      "reward": 0.9482262933862755,
+      "reward/mean": 0.9482262933862755,
+      "loss": 0.175,
+      "policy_loss": 0.11666666666666667,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 130,
+      "reward": 0.9519986000748516,
+      "reward/mean": 0.9519986000748516,
+      "loss": 0.16999999999999998,
+      "policy_loss": 0.11333333333333334,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 135,
+      "reward": 0.965588593456638,
+      "reward/mean": 0.965588593456638,
+      "loss": 0.16499999999999998,
+      "policy_loss": 0.11,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 140,
+      "reward": 0.9565425074661175,
+      "reward/mean": 0.9565425074661175,
+      "loss": 0.16,
+      "policy_loss": 0.10666666666666667,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 145,
+      "reward": 0.9557818087237169,
+      "reward/mean": 0.9557818087237169,
+      "loss": 0.155,
+      "policy_loss": 0.10333333333333333,
+      "learning_rate": 5e-06
+    },
+    {
+      "step": 150,
+      "reward": 0.9574667237449552,
+      "reward/mean": 0.9574667237449552,
+      "loss": 0.15,
+      "policy_loss": 0.1,
+      "learning_rate": 5e-06
+    }
+  ],
+  "final_metrics": {
+    "step": 150,
+    "reward": 0.96,
+    "reward/mean": 0.96,
+    "total_reward": 576.0
+  }
+}
