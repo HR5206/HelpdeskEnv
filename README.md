@@ -33,7 +33,7 @@ IT Helpdesk environments are notoriously difficult to automate because they requ
 
 > **Live Demo**: [huggingface.co/spaces/Harishraghav-05/helpdesk_env](https://huggingface.co/spaces/Harishraghav-05/helpdesk_env)
 >
-> **Repository**: [github.com/HR5206/emailenv](https://github.com/HR5206/emailenv)
+> **Repository**: [github.com/HR5206/HelpdeskEnv](https://github.com/HR5206/HelpdeskEnv)
 
 ---
 
