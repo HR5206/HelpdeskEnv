@@ -2,31 +2,244 @@
   {
     "seed": 42,
     "episode": 1,
-    "total_steps": 6,
+    "total_steps": 23,
     "total_tickets": 5,
-    "avg_composite": 0.0,
-    "per_ticket": [],
-    "kb_size": 3,
-    "kb_agent_entries": 1
+    "avg_composite": 0.907,
+    "per_ticket": [
+      {
+        "ticket_id": "ticket_004",
+        "subject": "CRITICAL: Accidentally deleted production database table",
+        "category": "data_recovery",
+        "tier": "L3",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 0.85,
+          "kb": 1.0
+        },
+        "composite": 0.97
+      },
+      {
+        "ticket_id": "ticket_002",
+        "subject": "Need Visual Studio Code installed with Python extensions",
+        "category": "software_install",
+        "tier": "L2",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 0.0
+        },
+        "composite": 0.85
+      },
+      {
+        "ticket_id": "ticket_003",
+        "subject": "URGENT: Entire 3rd floor has no network connectivity",
+        "category": "network_issue",
+        "tier": "L3",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 1.0
+        },
+        "composite": 1.0
+      },
+      {
+        "ticket_id": "ticket_005",
+        "subject": "Mysterious data corruption in nightly ETL pipeline",
+        "category": "other",
+        "tier": "L3",
+        "components": {
+          "triage": 0.5,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 1.0
+        },
+        "composite": 0.925
+      },
+      {
+        "ticket_id": "ticket_001",
+        "subject": "Cannot log in to my account \u2014 password expired",
+        "category": "password_reset",
+        "tier": "L1",
+        "components": {
+          "triage": 0.8,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 0.85,
+          "kb": 0.0
+        },
+        "composite": 0.79
+      }
+    ],
+    "kb_size": 5,
+    "kb_agent_entries": 3
   },
   {
     "seed": 43,
     "episode": 2,
-    "total_steps": 5,
+    "total_steps": 23,
     "total_tickets": 5,
-    "avg_composite": 0.0,
-    "per_ticket": [],
-    "kb_size": 3,
-    "kb_agent_entries": 1
+    "avg_composite": 0.907,
+    "per_ticket": [
+      {
+        "ticket_id": "ticket_002",
+        "subject": "Need Visual Studio Code installed with Python extensions",
+        "category": "software_install",
+        "tier": "L2",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 0.0
+        },
+        "composite": 0.85
+      },
+      {
+        "ticket_id": "ticket_005",
+        "subject": "Mysterious data corruption in nightly ETL pipeline",
+        "category": "other",
+        "tier": "L3",
+        "components": {
+          "triage": 0.5,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 1.0
+        },
+        "composite": 0.925
+      },
+      {
+        "ticket_id": "ticket_004",
+        "subject": "CRITICAL: Accidentally deleted production database table",
+        "category": "data_recovery",
+        "tier": "L3",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 0.85,
+          "kb": 1.0
+        },
+        "composite": 0.97
+      },
+      {
+        "ticket_id": "ticket_003",
+        "subject": "URGENT: Entire 3rd floor has no network connectivity",
+        "category": "network_issue",
+        "tier": "L3",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 1.0
+        },
+        "composite": 1.0
+      },
+      {
+        "ticket_id": "ticket_001",
+        "subject": "Cannot log in to my account \u2014 password expired",
+        "category": "password_reset",
+        "tier": "L1",
+        "components": {
+          "triage": 0.8,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 0.85,
+          "kb": 0.0
+        },
+        "composite": 0.79
+      }
+    ],
+    "kb_size": 8,
+    "kb_agent_entries": 6
   },
   {
     "seed": 44,
     "episode": 3,
-    "total_steps": 6,
+    "total_steps": 23,
     "total_tickets": 5,
-    "avg_composite": 0.0,
-    "per_ticket": [],
-    "kb_size": 4,
-    "kb_agent_entries": 2
+    "avg_composite": 0.907,
+    "per_ticket": [
+      {
+        "ticket_id": "ticket_003",
+        "subject": "URGENT: Entire 3rd floor has no network connectivity",
+        "category": "network_issue",
+        "tier": "L3",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 1.0
+        },
+        "composite": 1.0
+      },
+      {
+        "ticket_id": "ticket_002",
+        "subject": "Need Visual Studio Code installed with Python extensions",
+        "category": "software_install",
+        "tier": "L2",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 0.0
+        },
+        "composite": 0.85
+      },
+      {
+        "ticket_id": "ticket_005",
+        "subject": "Mysterious data corruption in nightly ETL pipeline",
+        "category": "other",
+        "tier": "L3",
+        "components": {
+          "triage": 0.5,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 1.0,
+          "kb": 1.0
+        },
+        "composite": 0.925
+      },
+      {
+        "ticket_id": "ticket_001",
+        "subject": "Cannot log in to my account \u2014 password expired",
+        "category": "password_reset",
+        "tier": "L1",
+        "components": {
+          "triage": 0.8,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 0.85,
+          "kb": 0.0
+        },
+        "composite": 0.79
+      },
+      {
+        "ticket_id": "ticket_004",
+        "subject": "CRITICAL: Accidentally deleted production database table",
+        "category": "data_recovery",
+        "tier": "L3",
+        "components": {
+          "triage": 1.0,
+          "resolution": 1.0,
+          "response": 1.0,
+          "efficiency": 0.85,
+          "kb": 1.0
+        },
+        "composite": 0.97
+      }
+    ],
+    "kb_size": 11,
+    "kb_agent_entries": 9
   }
 ]
