@@ -16,7 +16,7 @@ from typing import Optional, Dict, Any, List
 import json
 from models import (
     Ticket, HelpdeskAction, HelpdeskEnvState, HelpdeskResetResponse,
-    StepResult, ErrorResponse, AgentRole, SupportTier, TicketCategory,
+    StepResult, AgentRole, SupportTier, TicketCategory,
     VALID_ACTION_TYPES, EmailTask, AgentAction,
 )
 from knowledge_base import KnowledgeBase, KBEntry
@@ -317,7 +317,7 @@ class HelpdeskEnv:
 
         # Append routing info to the feedback
         result.feedback += (
-            f"\n\n→ Ticket routed to {self._current_agent.value} "
+            f"\n\n-> Ticket routed to {self._current_agent.value} "
             f"(ground truth tier: {tier.value})"
         )
 
@@ -344,7 +344,7 @@ class HelpdeskEnv:
             results = self._kb.search(query, top_k=3)
             if results:
                 kb_text = "\n\n".join(
-                    f"📄 [{r.entry_id}] {r.title}\n"
+                    f"[KB] [{r.entry_id}] {r.title}\n"
                     f"   Problem: {r.problem_description[:100]}...\n"
                     f"   Solution: {r.solution[:150]}..."
                     for r in results
@@ -430,9 +430,9 @@ class HelpdeskEnv:
             # Responding to customer RESOLVES the ticket
             combined = self._resolve_ticket(ticket, response_reward)
             is_last = not self._advance_to_next_ticket()
-            feedback += f"\n\n✅ Ticket resolved! Combined ticket reward: {combined:.2f}"
+            feedback += f"\n\n[RESOLVED] Ticket resolved! Combined ticket reward: {combined:.2f}"
             if is_last:
-                feedback += "\n🏁 All tickets resolved — episode complete!"
+                feedback += "\n[DONE] All tickets resolved -- episode complete!"
             result = StepResult(
                 task_id=ticket.ticket_id,
                 reward=response_reward,
@@ -459,7 +459,7 @@ class HelpdeskEnv:
                     task_id=ticket.ticket_id,
                     reward=0.0,
                     done=False,
-                    feedback="⚠️ L3 is the highest tier — cannot escalate further.",
+                    feedback="[WARNING] L3 is the highest tier -- cannot escalate further.",
                 )
                 self._history.append(result)
                 return result
@@ -468,7 +468,7 @@ class HelpdeskEnv:
                 reward=0.0,  # No reward for escalation (efficiency penalty later)
                 done=False,
                 feedback=(
-                    f"↗️ Escalated to {new_tier}: {reason}\n"
+                    f"[ESCALATED] to {new_tier}: {reason}\n"
                     f"Total escalations on this ticket: {self._escalation_count}"
                 ),
             )
@@ -505,9 +505,9 @@ class HelpdeskEnv:
                 )
                 added = self._kb.add(new_entry)
                 self._kb_entries_added += 1
-                kb_result.feedback += f"\n\n📝 KB article added as '{added.entry_id}' (KB size: {self._kb.size()})"
+                kb_result.feedback += f"\n\n[KB-ADDED] Article added as '{added.entry_id}' (KB size: {self._kb.size()})"
             else:
-                kb_result.feedback += "\n\n❌ KB article quality too low — not added (threshold: 0.30)"
+                kb_result.feedback += "\n\n[KB-REJECTED] Article quality too low -- not added (threshold: 0.30)"
             # Store KB reward
             if ticket.ticket_id not in self._ticket_rewards:
                 self._ticket_rewards[ticket.ticket_id] = []

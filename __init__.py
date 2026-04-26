@@ -1,33 +1,31 @@
-"""EmailEnv - OpenEnv environment for email triage and customer support."""
+"""HelpdeskEnv - OpenEnv environment for multi-agent IT helpdesk simulation."""
 
-from env import EmailEnv
+from helpdeskenv_class import HelpdeskEnv
 from models import (
-    Email,
-    Observation,
-    Action,
-    State,
-    Reward,
-    TaskType,
+    Ticket,
+    HelpdeskAction,
+    HelpdeskEnvState,
+    HelpdeskResetResponse,
+    TicketCategory,
+    TicketPriority,
+    SupportTier,
+    AgentRole,
     EmailTask,
     AgentAction,
     StepResult,
-    EnvState,
-    ResetResponse,
-    ErrorResponse,
 )
 
 __all__ = [
-    "EmailEnv",
-    "Email",
-    "Observation",
-    "Action",
-    "State",
-    "Reward",
-    "TaskType",
+    "HelpdeskEnv",
+    "Ticket",
+    "HelpdeskAction",
+    "HelpdeskEnvState",
+    "HelpdeskResetResponse",
+    "TicketCategory",
+    "TicketPriority",
+    "SupportTier",
+    "AgentRole",
     "EmailTask",
     "AgentAction",
     "StepResult",
-    "EnvState",
-    "ResetResponse",
-    "ErrorResponse",
 ]

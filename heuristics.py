@@ -298,12 +298,12 @@ if __name__ == "__main__":
     tickets = get_all_ticket_scenarios()
     for ticket in tickets[:2]:
         print(f"\n{'─' * 60}")
-        print(f"Ticket: {ticket.ticket_id} — {ticket.subject}")
+        print(f"Ticket: {ticket.ticket_id} -- {ticket.subject}")
         print(f"Expected: cat={ticket.category.value}, pri={ticket.ground_truth_priority.value}, tier={ticket.ground_truth_tier.value}")
         print(f"{'─' * 60}")
         # Triage
         triage = heuristic_triage(ticket)
-        print(f"\n  Triage → {triage['action_value']}")
+        print(f"\n  Triage -> {triage['action_value']}")
         # Support agent actions (steps 0-2)
         tier = ticket.ground_truth_tier.value
         for step in range(3):
@@ -313,7 +313,7 @@ if __name__ == "__main__":
                 action = heuristic_l2(ticket, kb, step)
             else:
                 action = heuristic_l3(ticket, kb, step)
-            print(f"  {tier} Step {step} → {action['action_type']}: {action['action_value'][:80]}...")
+            print(f"  {tier} Step {step} -> {action['action_type']}: {action['action_value'][:80]}...")
     print(f"\n{'=' * 60}")
     print("Heuristic agents validated!")
     print(f"{'=' * 60}")

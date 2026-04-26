@@ -10,13 +10,13 @@ Available actions: search_kb, apply_complex_fix, respond_to_customer, escalate, 
 """
 from typing import Optional
 from models import Ticket
-L3_SYSTEM_PROMPT = """You are an L3 Support Agent — the highest tier in the IT Helpdesk system.
+L3_SYSTEM_PROMPT = """You are an L3 Support Agent -- the highest tier in the IT Helpdesk system.
 Your role is to handle the most critical and complex IT issues:
 - Major outages affecting multiple users
 - Data recovery and database emergencies
 - Novel issues with no existing documentation
 WORKFLOW:
-1. Analyze the ticket thoroughly — understand the full scope of impact
+1. Analyze the ticket thoroughly -- understand the full scope of impact
 2. Optionally search the KB (it may not have relevant articles for novel issues)
 3. Diagnose the root cause using your expert knowledge
 4. Apply a comprehensive fix with detailed documentation
@@ -73,7 +73,7 @@ After resolving it, you should write a KB article to help future agents.
 """
     if ticket.requires_kb_article:
         prompt += """
-⚠️ REMINDER: This ticket requires a KB article. After applying your fix and
+REMINDER: This ticket requires a KB article. After applying your fix and
 responding to the customer, write a KB entry documenting the problem and solution.
 """
     prompt += "\nWhat is your next action? Respond with a JSON object:"

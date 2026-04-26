@@ -74,7 +74,7 @@ async def metadata() -> Dict[str, Any]:
             "Features: multi-agent routing, long-horizon SLA planning, persistent Knowledge Base "
             "for self-improvement, and tiered escalation workflows."
         ),
-        "version": "2.0.0",
+        "version": "2.1.0",
         "author": "HelpdeskEnv Team",
         "themes": [
             "multi_agent_interaction",

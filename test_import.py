@@ -7,31 +7,31 @@ sys.path.insert(0, '/app')
 print("Testing imports...")
 
 try:
-    print("  ✓ Importing models...")
+    print("  [PASS] Importing models...")
     from models import (
-        EmailTask, Action, AgentAction, StepResult, EnvState, 
-        ResetResponse, ErrorResponse, TaskType
+        EmailTask, AgentAction, StepResult,
+        Ticket, HelpdeskAction, HelpdeskEnvState, HelpdeskResetResponse,
+        AgentRole, SupportTier, TicketCategory, VALID_ACTION_TYPES
     )
     
-    print("  ✓ Checking ResetResponse fields...")
-    print(f"    Fields: {ResetResponse.model_fields.keys()}")
+    print("  [PASS] Checking HelpdeskResetResponse fields...")
+    print(f"    Fields: {HelpdeskResetResponse.model_fields.keys()}")
     
-    print("  ✓ Importing emailenv_class...")
-    from emailenv_class import EmailEnv
+    print("  [PASS] Importing HelpdeskEnv...")
+    from helpdeskenv_class import HelpdeskEnv
     
-    print("  ✓ Creating EmailEnv instance...")
-    env = EmailEnv()
+    print("  [PASS] Creating HelpdeskEnv instance...")
+    env = HelpdeskEnv()
     
-    print("  ✓ Calling reset()...")
+    print("  [PASS] Calling reset()...")
     print(f"    About to reset at line {sys._getframe().f_lineno + 1}")
     reset_response = env.reset()
     print(f"    Reset successful: {type(reset_response)}")
     
 except Exception as e:
-    print(f"\n❌ Error: {e}")
+    print(f"\n[FAIL] Error: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
 
-print("\n✅ All tests passed!")
-
+print("\n[SUCCESS] All tests passed!")

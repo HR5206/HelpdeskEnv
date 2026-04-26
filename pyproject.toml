@@ -42,3 +42,6 @@ emailenv-server = "server.app:main"
 spam_classification = "graders:grade_spam"
 email_prioritization = "graders:grade_priority"
 reply_generation = "graders:grade_reply"
+
+[tool.pyright]
+extraPaths = ["."]

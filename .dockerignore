@@ -24,3 +24,13 @@ build/
 htmlcov/
 .coverage
 *.log
+training_data/
+results/
+plots/
+JUDGING_AUDIT.md
+PITCH.md
+REWARD_DESIGN.md
+train_grpo.py
+generate_plots.py
+generate_training_data.py
+baseline_agent.py

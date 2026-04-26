@@ -220,34 +220,90 @@ def main():
     print(f"  Starting training ({args.steps} steps)...")
     print(f"{'_' * 60}\n")
     start_time = time.time()
-    train_result = trainer.train()
+    try:
+        train_result = trainer.train()
+    except Exception as e:
+        elapsed = time.time() - start_time
+        print(f"\n[ERROR] Training failed after {elapsed:.0f}s: {e}")
+        # Still try to save whatever metrics we have
+        _save_metrics(trainer, elapsed, args, error=str(e))
+        raise
     elapsed = time.time() - start_time
     print(f"\n{'_' * 60}")
     print(f"  Training complete in {elapsed:.0f}s ({elapsed/60:.1f} min)")
     print(f"{'_' * 60}")
     # Save model
-    trainer.save_model(args.output_dir)
-    tokenizer.save_pretrained(args.output_dir)
-    print(f"  Model saved to: {args.output_dir}")
-    # Extract and save training metrics
-    metrics = []
-    if hasattr(trainer.state, "log_history"):
-        for entry in trainer.state.log_history:
-            if "loss" in entry or "reward" in entry:
-                metrics.append(entry)
-    os.makedirs("results", exist_ok=True)
-    metrics_path = os.path.join("results", "training_metrics.json")
-    with open(metrics_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "model": MODEL_NAME,
-            "steps": args.steps,
-            "elapsed_seconds": round(elapsed, 1),
-            "final_loss": train_result.training_loss if hasattr(train_result, 'training_loss') else None,
-            "log_history": metrics,
-        }, f, indent=2)
-    print(f"  Metrics saved to: {metrics_path}")
+    try:
+        trainer.save_model(args.output_dir)
+        tokenizer.save_pretrained(args.output_dir)
+        print(f"  Model saved to: {args.output_dir}")
+    except Exception as e:
+        print(f"  [WARNING] Could not save model: {e}")
+    # Save metrics
+    _save_metrics(trainer, elapsed, args)
     print(f"\n{'=' * 60}")
     print("Training complete! Next: python generate_plots.py")
     print(f"{'=' * 60}")
+
+def _save_metrics(trainer, elapsed: float, args, error: str = None):
+    """Save training metrics to JSON. Captures ALL log entries."""
+    # Get the full log history -- don't filter, capture everything
+    full_log = []
+    if hasattr(trainer, "state") and hasattr(trainer.state, "log_history"):
+        full_log = list(trainer.state.log_history)
+    # Debug: show what keys TRL actually logged
+    if full_log:
+        sample_keys = set()
+        for entry in full_log:
+            sample_keys.update(entry.keys())
+        print(f"  [DEBUG] Log history: {len(full_log)} entries")
+        print(f"  [DEBUG] Available keys: {sorted(sample_keys)}")
+        # Print last few entries so user can see what data looks like
+        for entry in full_log[-3:]:
+            print(f"  [DEBUG] Sample entry: {entry}")
+    else:
+        print(f"  [WARNING] No log history found in trainer.state")
+        # Check if trainer has any other metric attributes
+        for attr in ["_metrics", "metrics", "log_history"]:
+            if hasattr(trainer, attr):
+                print(f"  [DEBUG] Found trainer.{attr}")
+    # Determine final loss
+    final_loss = None
+    try:
+        if hasattr(trainer, "state") and hasattr(trainer.state, "log_history"):
+            for entry in reversed(full_log):
+                for key in ["loss", "train_loss", "loss/policy", "train/loss"]:
+                    if key in entry:
+                        final_loss = entry[key]
+                        break
+                if final_loss is not None:
+                    break
+    except Exception:
+        pass
+    # Build metrics dict
+    metrics_data = {
+        "model": MODEL_NAME,
+        "steps": args.steps,
+        "elapsed_seconds": round(elapsed, 1),
+        "final_loss": final_loss,
+        "log_history": full_log,
+    }
+    if error:
+        metrics_data["error"] = error
+    # Save to both relative and absolute paths to be safe
+    results_dir = os.path.join(os.getcwd(), "results")
+    os.makedirs(results_dir, exist_ok=True)
+    metrics_path = os.path.join(results_dir, "training_metrics.json")
+    try:
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(metrics_data, f, indent=2, default=str)
+        print(f"  Metrics saved to: {metrics_path}")
+        print(f"  File size: {os.path.getsize(metrics_path)} bytes")
+    except Exception as e:
+        print(f"  [ERROR] Could not save metrics file: {e}")
+        # Last resort: print JSON to stdout so user can copy it
+        print(f"  [FALLBACK] Dumping metrics to stdout:")
+        print(json.dumps(metrics_data, indent=2, default=str))
+
 if __name__ == "__main__":
     main()

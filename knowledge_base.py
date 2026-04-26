@@ -74,7 +74,7 @@ class KnowledgeBase:
                 "1. Verify employee identity using their employee ID and department.\n"
                 "2. Open Active Directory Users and Computers.\n"
                 "3. Locate the user account by username.\n"
-                "4. Right-click → Reset Password.\n"
+                "4. Right-click -> Reset Password.\n"
                 "5. Set a temporary password (minimum 12 characters, meets complexity).\n"
                 "6. Check 'User must change password at next logon'.\n"
                 "7. Communicate the temporary password to the employee securely.\n"
@@ -221,24 +221,24 @@ if __name__ == "__main__":
     # Test 1: Seed entries loaded
     print(f"\n1. KB initialized with {kb.size()} seed entries")
     assert kb.size() == 2, f"Expected 2 seed entries, got {kb.size()}"
-    print("   ✅ Correct: 2 seed entries loaded")
+    print("   [OK] Correct: 2 seed entries loaded")
     # Test 2: Search for password reset
     results = kb.search("password expired cannot login")
-    print(f"\n2. Search 'password expired cannot login' → {len(results)} result(s)")
+    print(f"\n2. Search 'password expired cannot login' -> {len(results)} result(s)")
     assert len(results) >= 1, "Expected at least 1 result"
     assert "password" in results[0].title.lower(), "Top result should be password-related"
-    print(f"   ✅ Top result: {results[0].title}")
+    print(f"   [OK] Top result: {results[0].title}")
     # Test 3: Search for software install
     results = kb.search("install visual studio code python")
-    print(f"\n3. Search 'install visual studio code python' → {len(results)} result(s)")
+    print(f"\n3. Search 'install visual studio code python' -> {len(results)} result(s)")
     assert len(results) >= 1, "Expected at least 1 result"
     assert "software" in results[0].title.lower() or "install" in results[0].title.lower()
-    print(f"   ✅ Top result: {results[0].title}")
+    print(f"   [OK] Top result: {results[0].title}")
     # Test 4: Search with no matches
     results = kb.search("quantum computing flux capacitor")
-    print(f"\n4. Search 'quantum computing flux capacitor' → {len(results)} result(s)")
+    print(f"\n4. Search 'quantum computing flux capacitor' -> {len(results)} result(s)")
     assert len(results) == 0, "Expected 0 results for unrelated query"
-    print("   ✅ Correct: no results for unrelated query")
+    print("   [OK] Correct: no results for unrelated query")
     # Test 5: Add a new entry
     new_entry = KBEntry(
         entry_id="",
@@ -250,21 +250,21 @@ if __name__ == "__main__":
         created_by="l3_agent",
     )
     added = kb.add(new_entry)
-    print(f"\n5. Added new entry: {added.entry_id} — '{added.title}'")
+    print(f"\n5. Added new entry: {added.entry_id} -- '{added.title}'")
     assert kb.size() == 3, f"Expected 3 entries, got {kb.size()}"
-    print(f"   ✅ KB now has {kb.size()} entries")
+    print(f"   [OK] KB now has {kb.size()} entries")
     # Test 6: Search finds the new entry
     results = kb.search("network switch crash outage")
-    print(f"\n6. Search 'network switch crash outage' → {len(results)} result(s)")
+    print(f"\n6. Search 'network switch crash outage' -> {len(results)} result(s)")
     assert any("network" in r.title.lower() for r in results)
-    print(f"   ✅ Found new entry in search results")
+    print(f"   [OK] Found new entry in search results")
     # Test 7: Stats
     stats = kb.stats()
     print(f"\n7. KB Stats:")
     print(f"   Total entries: {stats['total_entries']}")
     print(f"   Categories: {stats['categories_covered']}")
     print(f"   Seed: {stats['seed_entries']}, Agent-created: {stats['agent_created_entries']}")
-    print(f"   ✅ Stats look correct")
+    print(f"   [OK] Stats look correct")
     print("\n" + "=" * 60)
     print("All Knowledge Base tests passed!")
     print("=" * 60)
