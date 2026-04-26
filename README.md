@@ -194,13 +194,10 @@ generate_plots.py            -->  plots/reward_curve.png
 # Install dependencies
 pip install --upgrade trl transformers datasets accelerate torch
 
-# Execute GRPO training (generates results/training_metrics.json)
-python train_grpo.py --steps 150
+# Run the GRPO training notebook in Colab to generate results/training_metrics.json
+# (See link above)
 
-# Alternative: Generate realistic training metrics (for local testing)
-python generate_training_metrics.py
-
-# Generate comparison plots
+# Generate comparison plots (uses simulated data if metrics are missing)
 python generate_plots.py
 
 # Check plots
@@ -289,8 +286,7 @@ HelpdeskEnv/
 |-- inference.py           # LLM + heuristic inference loops
 |-- baseline_agent.py      # Deterministic baseline with per-ticket scoring
 |-- generate_training_data.py  # JSONL dataset generator for TRL GRPO
-|-- generate_training_metrics.py   # Realistic training metrics generator
-|-- train_grpo.py          # GRPO training script (Colab/HF compatible)
+|-- train_grpo.ipynb      # GRPO training notebook (Colab/HF compatible)
 |-- generate_plots.py      # Reward curve and comparison plot generator
 |-- test_integration.py    # 43 end-to-end integration tests
 |-- agents/

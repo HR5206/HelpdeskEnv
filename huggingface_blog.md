@@ -283,7 +283,7 @@ These are real numbers. Not simulated. The baseline agent isn't learning — it'
 
 ## Training with GRPO (Real Numbers)
 
-We ran 3 episodes of a deterministic heuristic agent to establish the baseline. Then we trained a **Qwen/Qwen2.5-0.5B-Instruct** model using **TRL GRPO** (Group Relative Policy Optimization) for 150 steps on a T4 GPU.
+We ran 3 episodes of a deterministic heuristic agent to establish the baseline. Then we trained a **Qwen/Qwen2.5-0.5B-Instruct** model using **TRL GRPO** (Group Relative Policy Optimization) for 150 steps as shown in **train_grpo.ipynb**.
 
 **Training Parameters:**
 
@@ -345,8 +345,8 @@ pip install -r requirements.txt
 python baseline_agent.py
 # Output: results/baseline_results.json
 
-# Generate realistic training metrics for local testing
-python generate_training_metrics.py
+# Or run the training notebook
+# train_grpo.ipynb
 # Output: results/training_metrics.json
 
 # Generate comparison plots

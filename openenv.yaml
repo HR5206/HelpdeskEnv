@@ -8,7 +8,7 @@ description: >-
   to resolve tickets under SLA pressure, with a persistent Knowledge Base
   that enables self-improvement across episodes.
 license: Apache-2.0
-homepage: "https://huggingface.co/spaces/Harishraghav-05/helpdesk_envv"
+homepage: "https://huggingface.co/spaces/Harishraghav-05/helpdesk_env"
 repository: "https://github.com/HR5206/HelpdeskEnv"
 maintainers:
   - name: "Harish Raghav"
