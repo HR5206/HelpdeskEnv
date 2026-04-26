@@ -323,6 +323,7 @@ async def state() -> Dict[str, Any]:
         "kb_entries_added": state.kb_entries_added,
         "escalation_count": state.escalation_count,
         "history_length": len(state.history),
+        "history": [h.model_dump() for h in state.history],
     }
 
 @app.get("/kb")
