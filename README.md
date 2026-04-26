@@ -24,6 +24,13 @@ Triage, L1, L2, and L3 agents collaborate to resolve IT tickets under SLA
 pressure, with a persistent Knowledge Base that enables self-improvement
 across episodes.
 
+## Problem Motivation & Objective
+
+IT Helpdesk environments are notoriously difficult to automate because they require **specialized multi-agent coordination** and **continuous knowledge acquisition**.
+
+- **The Problem**: A single LLM agent often fails at complex helpdesk workflows because it must balance high-level triage with deep technical resolution across multiple tiers. Most automated systems are "static"—they don't learn from the unique, novel issues they solve.
+- **The Solution**: `HelpdeskEnv` implements a tiered multi-agent architecture where specialized agents collaborate via role-based escalations. Its standout feature is a **Self-Improving Knowledge Base**: as L3 agents solve novel problems, they write dynamic KB articles. This allows lower-tier agents to resolve similar issues in future episodes, creating a system that gets measurably smarter and faster over time.
+
 > **Live Demo**: [huggingface.co/spaces/Harishraghav-05/helpdesk_env](https://huggingface.co/spaces/Harishraghav-05/helpdesk_env)
 >
 > **Repository**: [github.com/HR5206/emailenv](https://github.com/HR5206/emailenv)
@@ -148,9 +155,15 @@ GRPO trained model shows **+5.3% improvement** over deterministic baseline:
 - Hardware: T4 GPU (~30 min training)
 - Metrics: [results/training_metrics.json](results/training_metrics.json)
 
-![Reward Curve](plots/reward_curve.png)
-![Baseline vs Trained](plots/baseline_vs_trained.png)
-![KB Growth](plots/kb_growth.png)
+### Training Plots (Real Run Evidence)
+
+| Reward Growth | Performance Comparison |
+| :---: | :---: |
+| ![Reward Curve](plots/reward_curve.png) | ![Baseline vs Trained](plots/baseline_vs_trained.png) |
+
+| Self-Improvement (KB Growth) |
+| :---: |
+| ![KB Growth](plots/kb_growth.png) |
 
 ---
 
