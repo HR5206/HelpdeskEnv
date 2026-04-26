@@ -310,7 +310,7 @@ function setSLA(steps, sla){
   document.getElementById('sla-text').textContent = `${steps}/${sla} steps`;
   const bar = document.getElementById('sla-bar');
   bar.style.width = pct+'%';
-  bar.style.background = pct < 60 ? 'var(--green)' : pct < 85 ? 'var(--amber)' : 'var(--red)';
+  bar.style.background = pct < 60 ? 'var(--accent)' : pct < 85 ? '#fcd34d' : '#ef4444';
 }
 
 async function fetchState(){
