@@ -22,7 +22,7 @@ from models import (
 from knowledge_base import KnowledgeBase, KBEntry
 from tasks import get_all_ticket_scenarios
 from graders import (
-    grade_triage, grade_efficiency, grade_kb_contribution,
+    grade_triage, grade_efficiency, grade_kb_contribution, grade_composite,
     _score_relevance, _score_politeness, _score_length,
 )
 class HelpdeskEnv:
@@ -427,9 +427,10 @@ class HelpdeskEnv:
                 ("response", response_reward)
             )
             # Responding to customer RESOLVES the ticket
-            combined = self._resolve_ticket(ticket, response_reward)
+            combined, breakdown = self._resolve_ticket(ticket, response_reward)
             is_last = not self._advance_to_next_ticket()
             feedback += f"\n\n[RESOLVED] Ticket resolved! Combined ticket reward: {combined:.2f}"
+            feedback += f"\n\n{breakdown}"
             if is_last:
                 feedback += "\n[DONE] All tickets resolved -- episode complete!"
             result = StepResult(
@@ -523,7 +524,7 @@ class HelpdeskEnv:
             done=False,
             feedback=f"Unknown action_type: {action_type}",
         )
-    def _resolve_ticket(self, ticket: Ticket, response_reward: float) -> float:
+    def _resolve_ticket(self, ticket: Ticket, response_reward: float) -> tuple[float, str]:
         """Calculate the combined reward for a fully resolved ticket.
         Combines all grading dimensions with the specified weights:
         - Resolution quality:  30%
@@ -535,7 +536,7 @@ class HelpdeskEnv:
             ticket: The ticket that was just resolved.
             response_reward: The reward from the customer response.
         Returns:
-            The combined weighted reward for this ticket.
+            The combined weighted reward and breakdown string.
         """
         rewards = self._ticket_rewards.get(ticket.ticket_id, [])
         # Gather component scores (use defaults if not found)
@@ -557,16 +558,14 @@ class HelpdeskEnv:
             if h.task_id == ticket.ticket_id and h.feedback and "Triage Score" in h.feedback:
                 triage_score = h.reward
                 break
-        # Combined weighted reward
-        combined = round(
-            resolution_score * 0.30 +
-            response_score * 0.20 +
-            efficiency_score * 0.20 +
-            triage_score * 0.15 +
-            kb_score * 0.15,
-            4
+        
+        return grade_composite(
+            triage=triage_score,
+            resolution=resolution_score,
+            response=response_score,
+            efficiency=efficiency_score,
+            kb=kb_score
         )
-        return combined
 # ============================================================================
 # Quick Validation (run with: python helpdeskenv_class.py)
 # ============================================================================
