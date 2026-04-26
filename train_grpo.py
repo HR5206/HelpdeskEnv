@@ -29,12 +29,12 @@ except ImportError:
     sys.exit(1)
 # ─── Config ──────────────────────────────────────────────────
 MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
-DEFAULT_STEPS = 150
+DEFAULT_STEPS = 50
 BATCH_SIZE = 4
 LEARNING_RATE = 5e-6
-MAX_PROMPT_LENGTH = 512
-MAX_COMPLETION_LENGTH = 256
-NUM_GENERATIONS = 4  # GRPO generates N completions per prompt
+MAX_PROMPT_LENGTH = 256
+MAX_COMPLETION_LENGTH = 128
+NUM_GENERATIONS = 2  # GRPO generates N completions per prompt (2 = fastest)
 # Valid actions per role
 VALID_ACTIONS = {
     "triage": ["triage"],
