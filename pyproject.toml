@@ -31,6 +31,7 @@ Homepage = "https://huggingface.co/spaces/Harishraghav-05/helpdesk_env"
 Repository = "https://github.com/HR5206/HelpdeskEnv"
 
 [project.scripts]
+server = "server.app:main"
 helpdeskenv-server = "server.app:main"
 
 [project.entry-points."helpdeskenv.graders"]
