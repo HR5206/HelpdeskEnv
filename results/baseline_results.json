@@ -1,0 +1,32 @@
+[
+  {
+    "seed": 42,
+    "episode": 1,
+    "total_steps": 6,
+    "total_tickets": 5,
+    "avg_composite": 0.0,
+    "per_ticket": [],
+    "kb_size": 3,
+    "kb_agent_entries": 1
+  },
+  {
+    "seed": 43,
+    "episode": 2,
+    "total_steps": 5,
+    "total_tickets": 5,
+    "avg_composite": 0.0,
+    "per_ticket": [],
+    "kb_size": 3,
+    "kb_agent_entries": 1
+  },
+  {
+    "seed": 44,
+    "episode": 3,
+    "total_steps": 6,
+    "total_tickets": 5,
+    "avg_composite": 0.0,
+    "per_ticket": [],
+    "kb_size": 4,
+    "kb_agent_entries": 2
+  }
+]
