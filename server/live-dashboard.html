@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HelpdeskEnv -- Live Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--text:#f1f5f9;--muted:#94a3b8;
+--accent:#6366f1;--accent2:#818cf8;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+--border:rgba(148,163,184,0.15);--radius:14px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{text-align:center;padding:32px 0 16px}
+.header h1{font-size:2em;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header p{color:var(--muted);font-size:.95em;margin-top:4px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px 60px}
+.toolbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 20px}
+.btn{padding:10px 22px;border:none;border-radius:10px;font-weight:700;font-size:.88em;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-p{background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
+.btn-g{background:var(--green);color:#fff}
+.btn-g:hover{box-shadow:0 4px 16px rgba(16,185,129,.4)}
+.btn-r{background:var(--red);color:#fff}
+.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:box-shadow .2s}
+.card:hover{box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.card h3{font-size:.95em;font-weight:700;color:var(--accent2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;font-size:.8em}
+.card.span2{grid-column:span 2}
+.card.span3{grid-column:1/-1}
+.stat{text-align:center}
+.stat-val{font-size:1.8em;font-weight:800}
+.stat-lbl{font-size:.75em;color:var(--muted);margin-top:2px}
+.stats-row{display:flex;justify-content:space-around}
+.badge{display:inline-block;padding:5px 14px;border-radius:8px;font-weight:700;font-size:.82em;letter-spacing:.3px}
+.badge-triage{background:rgba(99,102,241,.18);color:var(--accent2)}
+.badge-l1{background:rgba(16,185,129,.18);color:var(--green)}
+.badge-l2{background:rgba(245,158,11,.18);color:var(--amber)}
+.badge-l3{background:rgba(239,68,68,.18);color:var(--red)}
+.badge-done{background:rgba(148,163,184,.15);color:var(--muted)}
+.rw-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.rw-lbl{width:82px;font-size:.8em;color:var(--muted);font-weight:500}
+.rw-bar-bg{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.rw-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.rw-val{width:40px;text-align:right;font-size:.8em;font-weight:600}
+.sla-bar-bg{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;margin-top:8px}
+.sla-bar{height:100%;border-radius:6px;transition:width .4s}
+.ticket-info{font-size:.88em;line-height:1.7}
+.ticket-info strong{color:var(--text)}
+.ticket-info span{color:var(--muted)}
+.log{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;max-height:260px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.78em;line-height:1.6}
+.log-e{padding:2px 0;border-bottom:1px solid rgba(148,163,184,.06)}
+.log-ts{color:var(--muted)}
+.log-ag{color:var(--accent2);font-weight:600}
+.log-rw{color:var(--green);font-weight:600}
+.log-err{color:var(--red)}
+.form-row{display:flex;gap:8px;margin:6px 0;flex-wrap:wrap;align-items:center}
+.form-row label{font-size:.8em;color:var(--muted);width:70px;flex-shrink:0}
+.form-row select,.form-row input,.form-row textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:.85em;flex:1;min-width:120px}
+.form-row textarea{min-height:50px;resize:vertical}
+.kb-row{display:flex;align-items:center;gap:12px;padding:8px;background:var(--bg);border-radius:8px;margin:4px 0}
+.kb-num{font-size:1.3em;font-weight:800;min-width:36px;text-align:center}
+.kb-txt{font-size:.82em;color:var(--muted)}
+.kb-txt strong{color:var(--text);font-size:.95em}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot-live{background:var(--green);animation:blink 1.5s infinite}
+.dot-off{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tag{display:inline-block;padding:3px 9px;border-radius:5px;font-size:.72em;font-weight:600;margin:1px}
+.tag-cat{background:rgba(99,102,241,.12);color:var(--accent2)}
+.tag-pri{background:rgba(245,158,11,.12);color:var(--amber)}
+.tag-tier{background:rgba(16,185,129,.12);color:var(--green)}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.card.span2{grid-column:span 1}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>HelpdeskEnv Live Dashboard</h1>
+  <p><span class="dot dot-off" id="dot"></span><span id="conn-status">Connecting...</span></p>
+</div>
+<div class="wrap">
+  <div class="toolbar">
+    <button class="btn btn-p" onclick="newEpisode()">New Episode</button>
+    <button class="btn btn-g" id="btn-auto" onclick="toggleAuto()">Auto Play</button>
+    <button class="btn btn-r" id="btn-stop" onclick="stopAuto()" disabled>Stop</button>
+    <button class="btn btn-s" onclick="fetchAll()">Refresh</button>
+  </div>
+  <div class="grid">
+    <!-- Episode Stats -->
+    <div class="card">
+      <h3>Episode</h3>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val" id="ep-num" style="color:var(--accent2)">--</div><div class="stat-lbl">Episode</div></div>
+        <div class="stat"><div class="stat-val" id="ep-steps" style="color:var(--amber)">--</div><div class="stat-lbl">Steps</div></div>
+        <div class="stat"><div class="stat-val" id="ep-reward" style="color:var(--green)">--</div><div class="stat-lbl">Total Reward</div></div>
+      </div>
+      <div style="margin-top:12px;text-align:center">
+        <span class="badge badge-done" id="ep-status">No Episode</span>
+      </div>
+    </div>
+    <!-- Current Ticket -->
+    <div class="card">
+      <h3>Current Ticket</h3>
+      <div class="ticket-info" id="ticket-info">
+        <span>No active ticket. Start a new episode.</span>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:.78em;color:var(--muted)">
+          <span>SLA Progress</span><span id="sla-text">--</span>
+        </div>
+        <div class="sla-bar-bg"><div class="sla-bar" id="sla-bar" style="width:0%;background:var(--green)"></div></div>
+      </div>
+    </div>
+    <!-- Active Agent -->
+    <div class="card" style="text-align:center">
+      <h3>Active Agent</h3>
+      <div style="margin:16px 0">
+        <span class="badge badge-done" id="agent-badge" style="font-size:1.1em;padding:10px 24px">--</span>
+      </div>
+      <div style="font-size:.82em;color:var(--muted)">
+        Ticket <span id="tkt-progress">0/0</span> | Escalations: <span id="esc-count">0</span>
+      </div>
+    </div>
+    <!-- Reward Breakdown -->
+    <div class="card">
+      <h3>Reward Breakdown</h3>
+      <div class="rw-row"><span class="rw-lbl">Triage 15%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-triage" style="width:0%;background:var(--accent)"></div></div><span class="rw-val" id="rv-triage">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">Resol. 30%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-resolution" style="width:0%;background:var(--green)"></div></div><span class="rw-val" id="rv-resolution">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">Resp. 20%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-response" style="width:0%;background:var(--accent2)"></div></div><span class="rw-val" id="rv-response">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">Effic. 20%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-efficiency" style="width:0%;background:var(--amber)"></div></div><span class="rw-val" id="rv-efficiency">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">KB 15%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-kb" style="width:0%;background:#8b5cf6"></div></div><span class="rw-val" id="rv-kb">--</span></div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+        <span style="font-weight:700;color:var(--muted);font-size:.85em">Composite</span>
+        <span style="font-size:1.3em;font-weight:800" id="rv-composite">--</span>
+      </div>
+    </div>
+    <!-- KB Stats -->
+    <div class="card">
+      <h3>Knowledge Base</h3>
+      <div class="kb-row"><div class="kb-num" style="color:var(--accent2)" id="kb-total">--</div><div class="kb-txt"><strong>Total Entries</strong><br>Seed + agent-created</div></div>
+      <div class="kb-row"><div class="kb-num" style="color:var(--muted)" id="kb-seed">--</div><div class="kb-txt"><strong>Seed Articles</strong><br>Loaded at init</div></div>
+      <div class="kb-row"><div class="kb-num" style="color:var(--green)" id="kb-agent">--</div><div class="kb-txt"><strong>Agent-Created</strong><br>Written by L3 agents</div></div>
+      <div class="kb-row"><div class="kb-num" style="color:var(--amber)" id="kb-usage">--</div><div class="kb-txt"><strong>Total Usage</strong><br>Times articles referenced</div></div>
+    </div>
+    <!-- Submit Action -->
+    <div class="card">
+      <h3>Submit Action</h3>
+      <div class="form-row"><label>Role</label><select id="f-role"><option value="triage">Triage</option><option value="l1_support">L1</option><option value="l2_support">L2</option><option value="l3_support">L3</option></select></div>
+      <div class="form-row"><label>Action</label><select id="f-action"><option value="triage">triage</option><option value="search_kb">search_kb</option><option value="apply_solution">apply_solution</option><option value="apply_fix">apply_fix</option><option value="apply_complex_fix">apply_complex_fix</option><option value="respond_to_customer">respond_to_customer</option><option value="escalate">escalate</option><option value="write_kb_entry">write_kb_entry</option></select></div>
+      <div class="form-row"><label>Value</label><textarea id="f-value" placeholder='e.g. {"category":"password_reset","priority":"high","tier":"L1"}'></textarea></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-p" onclick="submitAction()" style="flex:1">Submit</button>
+        <button class="btn btn-s" onclick="submitEscalate()">Escalate</button>
+      </div>
+    </div>
+    <!-- Action Log -->
+    <div class="card span3">
+      <h3>Action Log <span style="font-weight:400;color:var(--muted);font-size:.9em">(last 20)</span></h3>
+      <div class="log" id="log"><div class="log-e"><span class="log-ts">[--:--:--]</span> Waiting for episode...</div></div>
+    </div>
+  </div>
+</div>
+<script>
+const BASE = window.location.origin;
+let autoInterval = null;
+let lastHistLen = 0;
+let episodeNum = 0;
+
+function ts(){return new Date().toLocaleTimeString()}
+
+function addLog(msg, cls=''){
+  const log = document.getElementById('log');
+  log.innerHTML += `<div class="log-e"><span class="log-ts">[${ts()}]</span> <span class="${cls}">${msg}</span></div>`;
+  log.scrollTop = log.scrollHeight;
+  // Keep last 40
+  while(log.children.length > 40) log.removeChild(log.firstChild);
+}
+
+async function api(path, method='GET', body=null){
+  try{
+    const opts = {method, headers:{'Content-Type':'application/json'}};
+    if(body) opts.body = JSON.stringify(body);
+    const r = await fetch(BASE + path, opts);
+    if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    return await r.json();
+  }catch(e){
+    addLog(`API error ${path}: ${e.message}`, 'log-err');
+    return null;
+  }
+}
+
+function setAgent(role){
+  const b = document.getElementById('agent-badge');
+  b.textContent = role ? role.toUpperCase().replace('_',' ') : '--';
+  b.className = 'badge ' + (role === 'triage' ? 'badge-triage' : role === 'l1_support' ? 'badge-l1' : role === 'l2_support' ? 'badge-l2' : role === 'l3_support' ? 'badge-l3' : 'badge-done');
+  // Auto-set form role
+  const sel = document.getElementById('f-role');
+  if(role && sel) sel.value = role;
+}
+
+function setSLA(steps, sla){
+  if(!sla || sla <= 0){document.getElementById('sla-text').textContent='--';document.getElementById('sla-bar').style.width='0%';return}
+  const pct = Math.min((steps/sla)*100, 100);
+  document.getElementById('sla-text').textContent = `${steps}/${sla} steps`;
+  const bar = document.getElementById('sla-bar');
+  bar.style.width = pct+'%';
+  bar.style.background = pct < 60 ? 'var(--green)' : pct < 85 ? 'var(--amber)' : 'var(--red)';
+}
+
+async function fetchState(){
+  const s = await api('/state');
+  if(!s) return null;
+  document.getElementById('ep-steps').textContent = s.history_length;
+  document.getElementById('ep-reward').textContent = s.total_reward.toFixed(2);
+  document.getElementById('tkt-progress').textContent = `${s.ticket_number}/${s.total_tickets}`;
+  document.getElementById('esc-count').textContent = s.escalation_count;
+  setAgent(s.current_agent);
+  const status = document.getElementById('ep-status');
+  if(s.is_done){status.textContent='COMPLETED';status.className='badge badge-done'}
+  else{status.textContent='IN PROGRESS';status.className='badge badge-l1'}
+  // Ticket info
+  const ti = document.getElementById('ticket-info');
+  if(s.current_ticket){
+    const t = s.current_ticket;
+    ti.innerHTML = `<strong>${t.ticket_id}</strong><br>
+      <span>${t.subject}</span><br>
+      <span class="tag tag-cat">${t.category||'--'}</span>
+      <span class="tag tag-pri">${t.ground_truth_priority||'--'}</span>
+      <span class="tag tag-tier">${t.ground_truth_tier||'--'}</span><br>
+      <span style="font-size:.8em;color:var(--muted);margin-top:4px;display:inline-block">${(t.body||'').substring(0,120)}...</span>`;
+    setSLA(s.steps_on_current_ticket, t.sla_steps||5);
+  } else {
+    ti.innerHTML = '<span>No active ticket.</span>';
+    setSLA(0,0);
+  }
+  // Check for new log entries
+  if(s.history_length > lastHistLen){
+    lastHistLen = s.history_length;
+  }
+  return s;
+}
+
+async function fetchKB(){
+  const kb = await api('/kb');
+  if(!kb) return;
+  document.getElementById('kb-total').textContent = kb.total_entries;
+  document.getElementById('kb-seed').textContent = kb.seed_entries;
+  document.getElementById('kb-agent').textContent = kb.agent_created_entries;
+  document.getElementById('kb-usage').textContent = kb.total_usage;
+}
+
+async function fetchAll(){
+  const s = await fetchState();
+  await fetchKB();
+  const dot = document.getElementById('dot');
+  const cs = document.getElementById('conn-status');
+  if(s !== null){dot.className='dot dot-live';cs.textContent='Connected';}
+  else{dot.className='dot dot-off';cs.textContent='Disconnected';}
+  return s;
+}
+
+async function newEpisode(){
+  episodeNum++;
+  document.getElementById('ep-num').textContent = episodeNum;
+  lastHistLen = 0;
+  addLog('Starting new episode...', 'log-ag');
+  // Reset reward bars
+  ['triage','resolution','response','efficiency','kb'].forEach(n=>{
+    document.getElementById('rw-'+n).style.width='0%';
+    document.getElementById('rv-'+n).textContent='--';
+  });
+  document.getElementById('rv-composite').textContent='--';
+  const r = await api('/reset', 'POST', {seed: Date.now() % 10000, num_tickets: 5});
+  if(r){
+    addLog(`Episode ${episodeNum}: ${r.total_tickets} tickets, KB size: ${r.kb_size}`, 'log-ag');
+    document.getElementById('ep-num').textContent = r.episode || episodeNum;
+    episodeNum = r.episode || episodeNum;
+  }
+  await fetchAll();
+}
+
+async function submitAction(){
+  const s = await api('/state');
+  if(!s || s.is_done || !s.current_ticket) {addLog('No active ticket -- start a new episode','log-err'); return}
+  const body = {
+    ticket_id: s.current_ticket.ticket_id,
+    agent_role: document.getElementById('f-role').value.toUpperCase(),
+    action_type: document.getElementById('f-action').value,
+    action_value: document.getElementById('f-value').value || '{}'
+  };
+  addLog(`[${body.agent_role}] ${body.action_type}`, 'log-ag');
+  const r = await api('/step', 'POST', body);
+  if(r){
+    addLog(`Reward: ${r.reward.toFixed(2)} | ${r.feedback ? r.feedback.substring(0,100) : ''}`, r.reward > 0 ? 'log-rw' : '');
+    if(r.done) addLog('[DONE] Episode complete!', 'log-ag');
+  }
+  await fetchAll();
+}
+
+async function submitEscalate(){
+  const s = await api('/state');
+  if(!s || s.is_done || !s.current_ticket) return;
+  const body = {
+    ticket_id: s.current_ticket.ticket_id,
+    agent_role: (s.current_agent||'triage').toUpperCase(),
+    action_type: 'escalate',
+    action_value: 'Dashboard user escalation'
+  };
+  addLog(`[ESCALATE] ${s.current_agent} requesting escalation`, 'log-ag');
+  const r = await api('/step', 'POST', body);
+  if(r) addLog(r.feedback ? r.feedback.substring(0,120) : 'Escalated', 'log-rw');
+  await fetchAll();
+}
+
+async function heuristicStep(){
+  const r = await api('/heuristic_step', 'POST');
+  if(!r) return false;
+  if(r.error){addLog(`Heuristic: ${r.error}`, 'log-err'); return false}
+  addLog(`<span class="log-ag">[${(r.agent_role||'').toUpperCase()}]</span> ${r.action_type} -> <span class="log-rw">${(r.reward||0).toFixed(2)}</span>`);
+  if(r.done){addLog('[DONE] Episode complete!', 'log-ag'); return false}
+  await fetchAll();
+  return true;
+}
+
+async function toggleAuto(){
+  if(autoInterval) {stopAuto(); return}
+  document.getElementById('btn-auto').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  addLog('Auto-play started', 'log-ag');
+  const run = async()=>{
+    const ok = await heuristicStep();
+    if(!ok) stopAuto();
+  };
+  autoInterval = setInterval(run, 1200);
+}
+
+function stopAuto(){
+  if(autoInterval){clearInterval(autoInterval); autoInterval = null}
+  document.getElementById('btn-auto').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  addLog('Auto-play stopped', 'log-ag');
+}
+
+// Poll every 2s
+setInterval(fetchAll, 2000);
+fetchAll();
+</script>
+</body>
+</html>
