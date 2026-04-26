@@ -125,6 +125,11 @@ body {font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); 
 .dot-off {background:#ef4444}
 @keyframes blink {0%,100%{opacity:1} 50%{opacity:.4}}
 
+/* Agent Flow Nodes */
+.agent-node { padding:6px 12px; border:2px solid var(--border); border-radius:12px; font-weight:800; font-size:0.75em; background:#fff; color:#000; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity:0.6 }
+.agent-node.active { background:var(--accent); box-shadow:3px 3px 0px var(--border); transform:scale(1.15); opacity:1 }
+.flow-arrow { font-size:0.8em; font-weight:800; opacity:0.3; margin:0 4px }
+
 /* Tags */
 .tag {display:inline-block; padding:4px 10px; border-radius:8px; font-size:.75em; font-weight:700; margin:2px; border:1px solid var(--border)}
 .tag-cat {background:#fff}
@@ -138,6 +143,12 @@ body {font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); 
 .modal .form-row {flex-direction:column; align-items:stretch; margin-bottom:16px}
 .modal .form-row label {width:auto; margin-bottom:6px}
 .modal-btns {display:flex; gap:12px; margin-top:24px; justify-content:flex-end}
+
+/* KB Explorer Entry */
+.kb-entry-card { background:var(--surface2); border:2px solid var(--border); border-radius:16px; padding:16px; margin-bottom:16px; transition:transform 0.2s }
+.kb-entry-card:hover { transform:translateX(4px) }
+.kb-entry-title { font-weight:800; font-size:1.1em; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between; align-items:flex-start }
+.kb-entry-body { font-size:0.85em; color:var(--muted); font-family:monospace; background:#fff; border:1px solid rgba(0,0,0,0.1); padding:10px; border-radius:8px; margin-top:8px; white-space:pre-wrap }
 
 @media(max-width:900px) { .grid{grid-template-columns:1fr} .card.span2{grid-column:span 1} }
 </style>
@@ -183,7 +194,12 @@ body {font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); 
     </div>
     <!-- Active Agent -->
     <div class="card accent" style="text-align:center; display:flex; flex-direction:column; justify-content:center">
-      <h3 style="margin-bottom:8px">Active Agent</h3>
+      <div style="display:flex; justify-content:center; gap:4px; margin-bottom:20px; align-items:center;">
+        <span class="agent-node" id="node-triage">TRI</span><span class="flow-arrow">➔</span>
+        <span class="agent-node" id="node-l1">L1</span><span class="flow-arrow">➔</span>
+        <span class="agent-node" id="node-l2">L2</span><span class="flow-arrow">➔</span>
+        <span class="agent-node" id="node-l3">L3</span>
+      </div>
       <div style="margin:16px 0">
         <span class="badge badge-done" id="agent-badge" style="font-size:1.3em;padding:12px 28px; box-shadow: 4px 4px 0px #000">--</span>
       </div>
@@ -211,6 +227,7 @@ body {font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); 
       <div class="kb-row"><div class="kb-num" style="color:var(--muted)" id="kb-seed">--</div><div class="kb-txt"><strong>Seed Articles</strong><br>Loaded at init</div></div>
       <div class="kb-row"><div class="kb-num" style="color:var(--accent)" id="kb-agent">--</div><div class="kb-txt"><strong>Agent-Created</strong><br>Written by L3 agents</div></div>
       <div class="kb-row"><div class="kb-num" style="color:#000" id="kb-usage">--</div><div class="kb-txt"><strong>Total Usage</strong><br>Times articles referenced</div></div>
+      <button class="btn btn-s" style="width:100%; margin-top:12px; background:var(--surface-dark); color:#fff" onclick="openKbExplorer()">Browse KB Explorer</button>
     </div>
     <!-- Submit Action -->
     <div class="card">
@@ -266,6 +283,22 @@ body {font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); 
   </div>
 </div>
 
+<!-- KB Explorer Modal -->
+<div class="modal-overlay" id="kb-explorer">
+  <div class="modal" style="max-width:750px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="margin:0">Knowledge Base Explorer</h2>
+      <span class="badge badge-l1" id="kbe-count">0 Entries</span>
+    </div>
+    <div id="kb-list" style="max-height:60vh; overflow-y:auto; padding-right:8px">
+      <!-- KB Entries will be loaded here -->
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-p" onclick="closeKbExplorer()">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const BASE = window.location.origin;
 let autoInterval = null;
@@ -299,6 +332,14 @@ function setAgent(role){
   const b = document.getElementById('agent-badge');
   b.textContent = role ? role.toUpperCase().replace('_',' ') : '--';
   b.className = 'badge ' + (role === 'triage' ? 'badge-triage' : role === 'l1_support' ? 'badge-l1' : role === 'l2_support' ? 'badge-l2' : role === 'l3_support' ? 'badge-l3' : 'badge-done');
+  
+  // Update Flow Nodes
+  ['triage','l1','l2','l3'].forEach(n => document.getElementById('node-'+n).classList.remove('active'));
+  if(role === 'triage') document.getElementById('node-triage').classList.add('active');
+  if(role === 'l1_support') document.getElementById('node-l1').classList.add('active');
+  if(role === 'l2_support') document.getElementById('node-l2').classList.add('active');
+  if(role === 'l3_support') document.getElementById('node-l3').classList.add('active');
+
   // Auto-set form role
   const sel = document.getElementById('f-role');
   if(role && sel) sel.value = role;
@@ -388,6 +429,33 @@ async function newEpisode(){
 
 function openCustomModal() { document.getElementById('custom-modal').style.display = 'flex'; }
 function closeCustomModal() { document.getElementById('custom-modal').style.display = 'none'; }
+
+async function openKbExplorer() {
+  document.getElementById('kb-explorer').style.display = 'flex';
+  const list = document.getElementById('kb-list');
+  list.innerHTML = '<div style="text-align:center;padding:40px;font-weight:700">Loading KB...</div>';
+  
+  const r = await api('/kb/entries');
+  if(!r || !r.entries) { list.innerHTML = '<div style="color:red">Failed to load KB</div>'; return; }
+  
+  document.getElementById('kbe-count').textContent = `${r.entries.length} Entries`;
+  
+  list.innerHTML = r.entries.map(e => `
+    <div class="kb-entry-card" style="border-color:${e.created_by==='seed'?'rgba(0,0,0,0.1)':'var(--border)'}">
+      <div class="kb-entry-title">
+        <span>${e.title}</span>
+        <span class="tag tag-tier">${e.created_by}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <span class="tag tag-cat">${e.category}</span>
+        <span class="tag tag-pri">Used: ${e.times_used}</span>
+      </div>
+      <div class="kb-entry-body"><strong>Problem:</strong>\n${e.problem_description}</div>
+      <div class="kb-entry-body"><strong>Solution:</strong>\n${e.solution}</div>
+    </div>
+  `).join('');
+}
+function closeKbExplorer() { document.getElementById('kb-explorer').style.display = 'none'; }
 
 async function submitCustomTicket() {
   const btn = document.querySelector('#custom-modal .btn-p');

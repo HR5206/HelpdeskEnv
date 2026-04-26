@@ -351,6 +351,26 @@ async def kb_search(q: str = "", top_k: int = 3) -> Dict[str, Any]:
         "total_results": len(results),
     }
 
+@app.get("/kb/entries")
+async def get_all_kb_entries() -> Dict[str, Any]:
+    """Return all Knowledge Base entries for the dashboard explorer."""
+    entries = _helpdesk_env.kb()._entries.values()
+    return {
+        "entries": [
+            {
+                "entry_id": e.entry_id,
+                "title": e.title,
+                "category": e.ticket_category.value,
+                "problem_description": e.problem_description,
+                "solution": e.solution,
+                "keywords": e.keywords,
+                "created_by": e.created_by,
+                "times_used": e.times_used,
+            }
+            for e in entries
+        ]
+    }
+
 def main():
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7860)
