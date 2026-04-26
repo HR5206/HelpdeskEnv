@@ -71,33 +71,32 @@ class HelpdeskEnv:
         self,
         seed: Optional[int] = None,
         num_tickets: Optional[int] = None,
+        custom_tickets: Optional[List[Ticket]] = None,
     ) -> HelpdeskResetResponse:
-        """Start a new episode.
-        Selects tickets from the scenario pool, resets episode state,
-        and returns the first ticket for the Triage Agent.
-        IMPORTANT: The Knowledge Base is NOT reset. This is intentional —
-        it's the self-improvement mechanism. Knowledge from previous
-        episodes carries forward.
+        """Reset the environment to start a new episode.
+        
         Args:
-            seed: Optional random seed for reproducible ticket selection.
-            num_tickets: How many tickets to include (default: all scenarios).
-                         If less than available, randomly samples from pool.
+            seed: Random seed for reproducibility (ticket shuffling).
+            num_tickets: Number of tickets to sample for this episode.
+            custom_tickets: If provided, use these specific tickets instead of sampling from tasks.py.
+            
         Returns:
             HelpdeskResetResponse with the first ticket and episode metadata.
         """
         self._episode_count += 1
-        # Select tickets for this episode
-        all_scenarios = get_all_ticket_scenarios()
-        if seed is not None:
-            random.seed(seed)
-        if num_tickets is None or num_tickets >= len(all_scenarios):
-            # Use all tickets, optionally shuffled
-            self._tickets = list(all_scenarios)
-            if seed is not None:
-                random.shuffle(self._tickets)
+        
+        if custom_tickets:
+            self._tickets = custom_tickets
         else:
-            # Random sample of tickets
-            self._tickets = random.sample(all_scenarios, min(num_tickets, len(all_scenarios)))
+            all_scenarios = get_all_ticket_scenarios()
+            if seed is not None:
+                random.seed(seed)
+            if num_tickets is None or num_tickets >= len(all_scenarios):
+                self._tickets = list(all_scenarios)
+                if seed is not None:
+                    random.shuffle(self._tickets)
+            else:
+                self._tickets = random.sample(all_scenarios, min(num_tickets, len(all_scenarios)))
         # Reset episode state (but NOT the KB!)
         self._current_ticket_idx = 0
         self._current_agent = AgentRole.TRIAGE  # Always start with triage

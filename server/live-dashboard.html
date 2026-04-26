@@ -72,6 +72,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .tag-cat{background:rgba(99,102,241,.12);color:var(--accent2)}
 .tag-pri{background:rgba(245,158,11,.12);color:var(--amber)}
 .tag-tier{background:rgba(16,185,129,.12);color:var(--green)}
+/* Modal Styles */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center}
+.modal{background:var(--surface);padding:24px;border-radius:var(--radius);border:1px solid var(--border);width:90%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal h2{margin-bottom:16px;color:var(--accent2)}
+.modal .form-row{flex-direction:column;align-items:stretch;margin-bottom:12px}
+.modal .form-row label{width:auto;margin-bottom:4px}
+.modal-btns{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.card.span2{grid-column:span 1}}
 </style>
 </head>
@@ -83,6 +90,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="wrap">
   <div class="toolbar">
     <button class="btn btn-p" onclick="newEpisode()">New Episode</button>
+    <button class="btn btn-p" onclick="openCustomModal()" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">Custom Ticket</button>
     <button class="btn btn-g" id="btn-auto" onclick="toggleAuto()">Auto Play</button>
     <button class="btn btn-r" id="btn-stop" onclick="stopAuto()" disabled>Stop</button>
     <button class="btn btn-s" onclick="fetchAll()">Refresh</button>
@@ -161,7 +169,43 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="log" id="log"><div class="log-e"><span class="log-ts">[--:--:--]</span> Waiting for episode...</div></div>
     </div>
   </div>
+  </div>
 </div>
+
+<!-- Custom Ticket Modal -->
+<div class="modal-overlay" id="custom-modal">
+  <div class="modal">
+    <h2>Inject Custom Ticket</h2>
+    <div class="form-row"><label>Subject</label><input type="text" id="c-subj" value="Custom Request"></div>
+    <div class="form-row"><label>Sender</label><input type="text" id="c-sender" value="user@example.com"></div>
+    <div class="form-row"><label>Body</label><textarea id="c-body" style="min-height:80px">Describe the issue here...</textarea></div>
+    <div style="display:flex;gap:10px">
+      <div class="form-row" style="flex:1"><label>Category</label><select id="c-cat">
+        <option value="password_reset">Password Reset</option><option value="software_install">Software Install</option>
+        <option value="network_issue">Network Issue</option><option value="hardware_failure">Hardware Failure</option>
+        <option value="data_recovery">Data Recovery</option><option value="other">Other</option>
+      </select></div>
+      <div class="form-row" style="flex:1"><label>Priority</label><select id="c-pri">
+        <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option>
+      </select></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="form-row" style="flex:1"><label>Support Tier</label><select id="c-tier">
+        <option value="L1">L1</option><option value="L2">L2</option><option value="L3">L3</option>
+      </select></div>
+      <div class="form-row" style="flex:1"><label>SLA Steps</label><input type="number" id="c-sla" value="5" min="1" max="20"></div>
+    </div>
+    <div class="form-row"><label>Ground Truth Resolution (for grading)</label><input type="text" id="c-res" value="Resolved custom issue."></div>
+    <div class="form-row" style="flex-direction:row;align-items:center;margin-top:10px">
+      <input type="checkbox" id="c-kb" style="width:auto;flex:none;margin-right:8px"><label style="margin:0">Requires KB Article</label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-s" onclick="closeCustomModal()">Cancel</button>
+      <button class="btn btn-p" onclick="submitCustomTicket()">Inject & Start</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const BASE = window.location.origin;
 let autoInterval = null;
@@ -277,8 +321,40 @@ async function newEpisode(){
     addLog(`Episode ${episodeNum}: ${r.total_tickets} tickets, KB size: ${r.kb_size}`, 'log-ag');
     document.getElementById('ep-num').textContent = r.episode || episodeNum;
     episodeNum = r.episode || episodeNum;
+    addLog('Created new episode', 'log-ag');
+    fetchAll();
   }
-  await fetchAll();
+}
+
+function openCustomModal() { document.getElementById('custom-modal').style.display = 'flex'; }
+function closeCustomModal() { document.getElementById('custom-modal').style.display = 'none'; }
+
+async function submitCustomTicket() {
+  const btn = document.querySelector('#custom-modal .btn-p');
+  btn.textContent = 'Starting...';
+  btn.disabled = true;
+  
+  const payload = {
+    subject: document.getElementById('c-subj').value,
+    sender: document.getElementById('c-sender').value,
+    body: document.getElementById('c-body').value,
+    category: document.getElementById('c-cat').value,
+    priority: document.getElementById('c-pri').value,
+    tier: document.getElementById('c-tier').value,
+    resolution: document.getElementById('c-res').value,
+    sla_steps: parseInt(document.getElementById('c-sla').value),
+    requires_kb_article: document.getElementById('c-kb').checked
+  };
+
+  const r = await api('/reset/custom', 'POST', payload);
+  btn.textContent = 'Inject & Start';
+  btn.disabled = false;
+  closeCustomModal();
+  
+  if(r) {
+    addLog(`Created custom episode with ticket: ${payload.subject}`, 'log-ag');
+    fetchAll();
+  }
 }
 
 async function submitAction(){

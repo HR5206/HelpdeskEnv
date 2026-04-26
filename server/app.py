@@ -1,4 +1,4 @@
-﻿import os
+import os
 import logging
 from pathlib import Path
 from fastapi import FastAPI, Body
@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from helpdeskenv_class import HelpdeskEnv
 from models import (
     HelpdeskAction, HelpdeskEnvState, HelpdeskResetResponse,
-    AgentRole, Ticket,
+    AgentRole, Ticket, TicketCategory, TicketPriority, SupportTier
 )
 
 # Configure structured logging
@@ -30,6 +30,32 @@ class ResetRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {"seed": 42, "num_tickets": 3}
+        }
+
+class CustomTicketRequest(BaseModel):
+    subject: str
+    sender: str
+    body: str
+    category: str
+    priority: str
+    tier: str
+    resolution: str
+    sla_steps: int = 5
+    requires_kb_article: bool = False
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "subject": "Printer on fire",
+                "sender": "boss@company.com",
+                "body": "The 3rd floor printer is literally smoking.",
+                "category": "hardware_failure",
+                "priority": "critical",
+                "tier": "L3",
+                "resolution": "Extinguished fire and ordered replacement.",
+                "sla_steps": 2,
+                "requires_kb_article": True
+            }
         }
 
 class StepRequest(BaseModel):
@@ -230,6 +256,34 @@ async def reset(body: Optional[ResetRequest] = Body(None)) -> Dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"[RESET ERROR] {str(e)}")
+        raise
+
+@app.post("/reset/custom")
+async def reset_custom(body: CustomTicketRequest = Body(...)) -> Dict[str, Any]:
+    """Reset the environment with a user-provided custom ticket."""
+    try:
+        custom_ticket = Ticket(
+            ticket_id=f"custom_{_helpdesk_env.episode_count + 1}",
+            category=TicketCategory(body.category.lower()),
+            subject=body.subject,
+            sender=body.sender,
+            body=body.body,
+            ground_truth_priority=TicketPriority(body.priority.lower()),
+            ground_truth_tier=SupportTier(body.tier.upper()),
+            ground_truth_resolution=body.resolution,
+            sla_steps=body.sla_steps,
+            requires_kb_article=body.requires_kb_article
+        )
+        response = _helpdesk_env.reset(custom_tickets=[custom_ticket])
+        return {
+            "observation": response.observation.model_dump(),
+            "total_tickets": response.total_tickets,
+            "available_actions": response.available_actions,
+            "kb_size": response.kb_size,
+            "episode": _helpdesk_env.episode_count,
+        }
+    except Exception as e:
+        logger.error(f"[CUSTOM RESET ERROR] {str(e)}")
         raise
 
 @app.post("/step", response_model=StepResponse)
