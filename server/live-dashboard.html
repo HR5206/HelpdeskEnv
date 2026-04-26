@@ -6,80 +6,140 @@
 <title>HelpdeskEnv -- Live Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--text:#f1f5f9;--muted:#94a3b8;
---accent:#6366f1;--accent2:#818cf8;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
---border:rgba(148,163,184,0.15);--radius:14px}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.header{text-align:center;padding:32px 0 16px}
-.header h1{font-size:2em;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header p{color:var(--muted);font-size:.95em;margin-top:4px}
-.wrap{max-width:1200px;margin:0 auto;padding:0 20px 60px}
-.toolbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0 20px}
-.btn{padding:10px 22px;border:none;border-radius:10px;font-weight:700;font-size:.88em;cursor:pointer;transition:all .2s;font-family:inherit}
-.btn-p{background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff}
-.btn-p:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
-.btn-g{background:var(--green);color:#fff}
-.btn-g:hover{box-shadow:0 4px 16px rgba(16,185,129,.4)}
-.btn-r{background:var(--red);color:#fff}
-.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:box-shadow .2s}
-.card:hover{box-shadow:0 6px 24px rgba(0,0,0,.25)}
-.card h3{font-size:.95em;font-weight:700;color:var(--accent2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;font-size:.8em}
-.card.span2{grid-column:span 2}
-.card.span3{grid-column:1/-1}
-.stat{text-align:center}
-.stat-val{font-size:1.8em;font-weight:800}
-.stat-lbl{font-size:.75em;color:var(--muted);margin-top:2px}
-.stats-row{display:flex;justify-content:space-around}
-.badge{display:inline-block;padding:5px 14px;border-radius:8px;font-weight:700;font-size:.82em;letter-spacing:.3px}
-.badge-triage{background:rgba(99,102,241,.18);color:var(--accent2)}
-.badge-l1{background:rgba(16,185,129,.18);color:var(--green)}
-.badge-l2{background:rgba(245,158,11,.18);color:var(--amber)}
-.badge-l3{background:rgba(239,68,68,.18);color:var(--red)}
-.badge-done{background:rgba(148,163,184,.15);color:var(--muted)}
-.rw-row{display:flex;align-items:center;gap:10px;margin:6px 0}
-.rw-lbl{width:82px;font-size:.8em;color:var(--muted);font-weight:500}
-.rw-bar-bg{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
-.rw-bar{height:100%;border-radius:4px;transition:width .6s ease}
-.rw-val{width:40px;text-align:right;font-size:.8em;font-weight:600}
-.sla-bar-bg{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;margin-top:8px}
-.sla-bar{height:100%;border-radius:6px;transition:width .4s}
-.ticket-info{font-size:.88em;line-height:1.7}
-.ticket-info strong{color:var(--text)}
-.ticket-info span{color:var(--muted)}
-.log{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;max-height:260px;overflow-y:auto;font-family:'Courier New',monospace;font-size:.78em;line-height:1.6}
-.log-e{padding:2px 0;border-bottom:1px solid rgba(148,163,184,.06)}
-.log-ts{color:var(--muted)}
-.log-ag{color:var(--accent2);font-weight:600}
-.log-rw{color:var(--green);font-weight:600}
-.log-err{color:var(--red)}
-.form-row{display:flex;gap:8px;margin:6px 0;flex-wrap:wrap;align-items:center}
-.form-row label{font-size:.8em;color:var(--muted);width:70px;flex-shrink:0}
-.form-row select,.form-row input,.form-row textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:.85em;flex:1;min-width:120px}
-.form-row textarea{min-height:50px;resize:vertical}
-.kb-row{display:flex;align-items:center;gap:12px;padding:8px;background:var(--bg);border-radius:8px;margin:4px 0}
-.kb-num{font-size:1.3em;font-weight:800;min-width:36px;text-align:center}
-.kb-txt{font-size:.82em;color:var(--muted)}
-.kb-txt strong{color:var(--text);font-size:.95em}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
-.dot-live{background:var(--green);animation:blink 1.5s infinite}
-.dot-off{background:var(--red)}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.tag{display:inline-block;padding:3px 9px;border-radius:5px;font-size:.72em;font-weight:600;margin:1px}
-.tag-cat{background:rgba(99,102,241,.12);color:var(--accent2)}
-.tag-pri{background:rgba(245,158,11,.12);color:var(--amber)}
-.tag-tier{background:rgba(16,185,129,.12);color:var(--green)}
+* {margin:0; padding:0; box-sizing:border-box}
+:root {
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --surface-dark: #111827;
+  --surface2: #f9fafb;
+  --text: #000000;
+  --text-light: #ffffff;
+  --muted: #4b5563;
+  --muted-light: #9ca3af;
+  --accent: #f97316; /* Orange */
+  --accent-light: #fed7aa;
+  --border: #000000;
+  --radius: 24px;
+}
+body {font-family:'Inter', sans-serif; background:var(--bg); color:var(--text); min-height:100vh}
+
+/* Header */
+.header {text-align:center; padding:40px 0 20px}
+.header h1 {font-size:2.5em; font-weight:800; color:var(--text); letter-spacing:-1px}
+.header p {color:var(--muted); font-size:1em; font-weight:500; margin-top:8px}
+
+.wrap {max-width:1200px; margin:0 auto; padding:0 20px 60px}
+.toolbar {display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:16px 0 30px}
+
+/* Brutalist Buttons */
+.btn {
+  padding:12px 24px; border:2px solid var(--border); border-radius:12px; 
+  font-weight:700; font-size:.95em; cursor:pointer; font-family:inherit;
+  transition: all 0.15s ease-out; box-shadow: 4px 4px 0px var(--border);
+}
+.btn-p {background:var(--accent); color:#000}
+.btn-g {background:var(--surface-dark); color:#fff}
+.btn-r {background:#ef4444; color:#000}
+.btn-s {background:var(--surface); color:#000}
+.btn:hover {transform:translate(2px, 2px); box-shadow: 2px 2px 0px var(--border)}
+.btn:active {transform:translate(4px, 4px); box-shadow: 0px 0px 0px var(--border)}
+.btn:disabled {opacity:.5; cursor:not-allowed; transform:none!important; box-shadow:none!important}
+
+/* Grid & Cards */
+.grid {display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px}
+.card {
+  background:var(--surface); border:2px solid var(--border); 
+  border-radius:var(--radius); padding:24px; 
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+}
+.card:hover {transform:translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.08)}
+.card h3 {font-size:.95em; font-weight:800; color:var(--text); margin-bottom:16px; text-transform:uppercase; letter-spacing:1px}
+
+/* Card Variations */
+.card.span2 {grid-column:span 2}
+.card.span3 {grid-column:1/-1}
+.card.dark {background:var(--surface-dark); color:var(--text-light)}
+.card.dark h3 {color:var(--text-light)}
+.card.dark .muted-text {color:var(--muted-light)}
+.card.accent {background:var(--accent); color:#000}
+.card.accent h3 {color:#000}
+
+/* Stats */
+.stat {text-align:center}
+.stat-val {font-size:2.2em; font-weight:800; letter-spacing:-1px}
+.stat-lbl {font-size:.8em; color:inherit; font-weight:600; opacity:0.8; margin-top:2px}
+.stats-row {display:flex; justify-content:space-around; align-items:center}
+
+/* Badges */
+.badge {display:inline-block; padding:6px 16px; border:2px solid var(--border); border-radius:12px; font-weight:800; font-size:.85em; background:#fff; color:#000}
+.badge-triage {background:#fff}
+.badge-l1 {background:var(--accent)}
+.badge-l2 {background:#fcd34d}
+.badge-l3 {background:#fca5a5}
+.badge-done {background:#e5e7eb; color:var(--muted)}
+
+/* Progress Bars */
+.rw-row {display:flex; align-items:center; gap:12px; margin:8px 0}
+.rw-lbl {width:85px; font-size:.85em; color:inherit; font-weight:600; opacity:0.8}
+.rw-bar-bg {flex:1; height:12px; background:rgba(0,0,0,0.05); border-radius:6px; overflow:hidden; border:1px solid rgba(0,0,0,0.1)}
+.card.dark .rw-bar-bg {background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2)}
+.rw-bar {height:100%; border-radius:6px; transition:width .6s cubic-bezier(0.4, 0, 0.2, 1)}
+.rw-val {width:45px; text-align:right; font-size:.85em; font-weight:700}
+
+.sla-bar-bg {height:16px; background:rgba(0,0,0,0.05); border-radius:8px; overflow:hidden; margin-top:10px; border:1px solid rgba(0,0,0,0.1)}
+.sla-bar {height:100%; border-radius:8px; transition:width .4s}
+
+/* Misc */
+.ticket-info {font-size:.95em; line-height:1.6; padding:16px; background:var(--surface2); border-radius:16px; border:1px solid rgba(0,0,0,0.05)}
+.ticket-info strong {color:var(--text); font-weight:700}
+.ticket-info span {color:var(--muted)}
+
+.log {background:transparent; max-height:280px; overflow-y:auto; font-family:'Courier New',monospace; font-size:.85em; line-height:1.7}
+.log-e {padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1)}
+.log-ts {color:var(--muted-light); opacity:0.7}
+.log-ag {color:var(--accent); font-weight:700}
+.log-rw {color:#4ade80; font-weight:700}
+.log-err {color:#f87171}
+
+/* Forms */
+.form-row {display:flex; gap:12px; margin:8px 0; flex-wrap:wrap; align-items:center}
+.form-row label {font-size:.85em; font-weight:600; width:70px; flex-shrink:0}
+.form-row select, .form-row input, .form-row textarea {
+  background:#fff; border:2px solid var(--border); color:var(--text); padding:10px 14px; 
+  border-radius:12px; font-family:inherit; font-size:.9em; flex:1; min-width:120px;
+  font-weight:500; transition:box-shadow 0.2s;
+}
+.form-row select:focus, .form-row input:focus, .form-row textarea:focus {outline:none; box-shadow: 2px 2px 0px var(--border)}
+.form-row textarea {min-height:60px; resize:vertical}
+
+/* KB Stats */
+.kb-row {display:flex; align-items:center; gap:16px; padding:12px; background:var(--surface2); border-radius:16px; margin:8px 0; border:1px solid rgba(0,0,0,0.05)}
+.kb-num {font-size:1.6em; font-weight:800; min-width:40px; text-align:center; color:var(--text)}
+.kb-txt {font-size:.85em; color:var(--muted); line-height:1.4}
+.kb-txt strong {color:var(--text); font-size:1.05em; font-weight:700}
+
+/* Status Dot */
+.dot {width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px; border:1px solid #000}
+.dot-live {background:var(--accent); animation:blink 1.5s infinite}
+.dot-off {background:#ef4444}
+@keyframes blink {0%,100%{opacity:1} 50%{opacity:.4}}
+
+/* Tags */
+.tag {display:inline-block; padding:4px 10px; border-radius:8px; font-size:.75em; font-weight:700; margin:2px; border:1px solid var(--border)}
+.tag-cat {background:#fff}
+.tag-pri {background:var(--accent-light)}
+.tag-tier {background:var(--accent)}
+
 /* Modal Styles */
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center}
-.modal{background:var(--surface);padding:24px;border-radius:var(--radius);border:1px solid var(--border);width:90%;max-width:500px;max-height:90vh;overflow-y:auto}
-.modal h2{margin-bottom:16px;color:var(--accent2)}
-.modal .form-row{flex-direction:column;align-items:stretch;margin-bottom:12px}
-.modal .form-row label{width:auto;margin-bottom:4px}
-.modal-btns{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.card.span2{grid-column:span 1}}
+.modal-overlay {display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px); z-index:100; justify-content:center; align-items:center}
+.modal {background:var(--surface); padding:32px; border-radius:var(--radius); border:2px solid var(--border); width:90%; max-width:550px; max-height:90vh; overflow-y:auto; box-shadow: 8px 8px 0px var(--border)}
+.modal h2 {margin-bottom:20px; color:var(--text); font-weight:800; font-size:1.5em; letter-spacing:-0.5px}
+.modal .form-row {flex-direction:column; align-items:stretch; margin-bottom:16px}
+.modal .form-row label {width:auto; margin-bottom:6px}
+.modal-btns {display:flex; gap:12px; margin-top:24px; justify-content:flex-end}
+
+@media(max-width:900px) { .grid{grid-template-columns:1fr} .card.span2{grid-column:span 1} }
 </style>
 </head>
 <body>
@@ -90,21 +150,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="wrap">
   <div class="toolbar">
     <button class="btn btn-p" onclick="newEpisode()">New Episode</button>
-    <button class="btn btn-p" onclick="openCustomModal()" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">Custom Ticket</button>
+    <button class="btn btn-p" onclick="openCustomModal()">Custom Ticket</button>
     <button class="btn btn-g" id="btn-auto" onclick="toggleAuto()">Auto Play</button>
     <button class="btn btn-r" id="btn-stop" onclick="stopAuto()" disabled>Stop</button>
     <button class="btn btn-s" onclick="fetchAll()">Refresh</button>
   </div>
   <div class="grid">
     <!-- Episode Stats -->
-    <div class="card">
+    <div class="card dark">
       <h3>Episode</h3>
       <div class="stats-row">
-        <div class="stat"><div class="stat-val" id="ep-num" style="color:var(--accent2)">--</div><div class="stat-lbl">Episode</div></div>
-        <div class="stat"><div class="stat-val" id="ep-steps" style="color:var(--amber)">--</div><div class="stat-lbl">Steps</div></div>
-        <div class="stat"><div class="stat-val" id="ep-reward" style="color:var(--green)">--</div><div class="stat-lbl">Total Reward</div></div>
+        <div class="stat"><div class="stat-val" id="ep-num" style="color:var(--accent)">--</div><div class="stat-lbl muted-text">Episode</div></div>
+        <div class="stat"><div class="stat-val" id="ep-steps" style="color:#fff">--</div><div class="stat-lbl muted-text">Steps</div></div>
+        <div class="stat"><div class="stat-val" id="ep-reward" style="color:#4ade80">--</div><div class="stat-lbl muted-text">Total Reward</div></div>
       </div>
-      <div style="margin-top:12px;text-align:center">
+      <div style="margin-top:20px;text-align:center">
         <span class="badge badge-done" id="ep-status">No Episode</span>
       </div>
     </div>
@@ -122,35 +182,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
     </div>
     <!-- Active Agent -->
-    <div class="card" style="text-align:center">
-      <h3>Active Agent</h3>
+    <div class="card accent" style="text-align:center; display:flex; flex-direction:column; justify-content:center">
+      <h3 style="margin-bottom:8px">Active Agent</h3>
       <div style="margin:16px 0">
-        <span class="badge badge-done" id="agent-badge" style="font-size:1.1em;padding:10px 24px">--</span>
+        <span class="badge badge-done" id="agent-badge" style="font-size:1.3em;padding:12px 28px; box-shadow: 4px 4px 0px #000">--</span>
       </div>
-      <div style="font-size:.82em;color:var(--muted)">
+      <div style="font-size:.9em; font-weight:600">
         Ticket <span id="tkt-progress">0/0</span> | Escalations: <span id="esc-count">0</span>
       </div>
     </div>
     <!-- Reward Breakdown -->
-    <div class="card">
+    <div class="card dark">
       <h3>Reward Breakdown</h3>
       <div class="rw-row"><span class="rw-lbl">Triage 15%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-triage" style="width:0%;background:var(--accent)"></div></div><span class="rw-val" id="rv-triage">--</span></div>
-      <div class="rw-row"><span class="rw-lbl">Resol. 30%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-resolution" style="width:0%;background:var(--green)"></div></div><span class="rw-val" id="rv-resolution">--</span></div>
-      <div class="rw-row"><span class="rw-lbl">Resp. 20%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-response" style="width:0%;background:var(--accent2)"></div></div><span class="rw-val" id="rv-response">--</span></div>
-      <div class="rw-row"><span class="rw-lbl">Effic. 20%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-efficiency" style="width:0%;background:var(--amber)"></div></div><span class="rw-val" id="rv-efficiency">--</span></div>
-      <div class="rw-row"><span class="rw-lbl">KB 15%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-kb" style="width:0%;background:#8b5cf6"></div></div><span class="rw-val" id="rv-kb">--</span></div>
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
-        <span style="font-weight:700;color:var(--muted);font-size:.85em">Composite</span>
-        <span style="font-size:1.3em;font-weight:800" id="rv-composite">--</span>
+      <div class="rw-row"><span class="rw-lbl">Resol. 30%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-resolution" style="width:0%;background:#4ade80"></div></div><span class="rw-val" id="rv-resolution">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">Resp. 20%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-response" style="width:0%;background:#60a5fa"></div></div><span class="rw-val" id="rv-response">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">Effic. 20%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-efficiency" style="width:0%;background:#fcd34d"></div></div><span class="rw-val" id="rv-efficiency">--</span></div>
+      <div class="rw-row"><span class="rw-lbl">KB 15%</span><div class="rw-bar-bg"><div class="rw-bar" id="rw-kb" style="width:0%;background:#c084fc"></div></div><span class="rw-val" id="rv-kb">--</span></div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between; align-items:center">
+        <span style="font-weight:700;color:var(--muted-light);font-size:.9em">COMPOSITE SCORE</span>
+        <span style="font-size:1.5em;font-weight:800;color:var(--accent)" id="rv-composite">--</span>
       </div>
     </div>
     <!-- KB Stats -->
     <div class="card">
       <h3>Knowledge Base</h3>
-      <div class="kb-row"><div class="kb-num" style="color:var(--accent2)" id="kb-total">--</div><div class="kb-txt"><strong>Total Entries</strong><br>Seed + agent-created</div></div>
+      <div class="kb-row"><div class="kb-num" style="color:#000" id="kb-total">--</div><div class="kb-txt"><strong>Total Entries</strong><br>Seed + agent-created</div></div>
       <div class="kb-row"><div class="kb-num" style="color:var(--muted)" id="kb-seed">--</div><div class="kb-txt"><strong>Seed Articles</strong><br>Loaded at init</div></div>
-      <div class="kb-row"><div class="kb-num" style="color:var(--green)" id="kb-agent">--</div><div class="kb-txt"><strong>Agent-Created</strong><br>Written by L3 agents</div></div>
-      <div class="kb-row"><div class="kb-num" style="color:var(--amber)" id="kb-usage">--</div><div class="kb-txt"><strong>Total Usage</strong><br>Times articles referenced</div></div>
+      <div class="kb-row"><div class="kb-num" style="color:var(--accent)" id="kb-agent">--</div><div class="kb-txt"><strong>Agent-Created</strong><br>Written by L3 agents</div></div>
+      <div class="kb-row"><div class="kb-num" style="color:#000" id="kb-usage">--</div><div class="kb-txt"><strong>Total Usage</strong><br>Times articles referenced</div></div>
     </div>
     <!-- Submit Action -->
     <div class="card">
@@ -164,9 +224,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
     </div>
     <!-- Action Log -->
-    <div class="card span3">
-      <h3>Action Log <span style="font-weight:400;color:var(--muted);font-size:.9em">(last 20)</span></h3>
-      <div class="log" id="log"><div class="log-e"><span class="log-ts">[--:--:--]</span> Waiting for episode...</div></div>
+    <div class="card dark span3">
+      <h3>Action Log <span style="font-weight:500;color:var(--muted-light);font-size:.9em;text-transform:none;letter-spacing:0">(last 20)</span></h3>
+      <div class="log" id="log"><div class="log-e"><span class="log-ts">[--:--:--]</span> <span style="color:#fff">Waiting for episode...</span></div></div>
     </div>
   </div>
   </div>
