@@ -308,11 +308,15 @@ let autoInterval = null;
 let lastHistLen = 0;
 let episodeNum = 0;
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
 function ts(){return new Date().toLocaleTimeString()}
 
 function addLog(msg, cls=''){
   const log = document.getElementById('log');
-  log.innerHTML += `<div class="log-e"><span class="log-ts">[${ts()}]</span> <span class="${cls}">${msg}</span></div>`;
+  log.innerHTML += `<div class="log-e"><span class="log-ts">[${ts()}]</span> <span class="${escapeHtml(cls)}">${escapeHtml(msg)}</span></div>`;
   log.scrollTop = log.scrollHeight;
   // Keep last 40
   while(log.children.length > 40) log.removeChild(log.firstChild);
@@ -372,12 +376,12 @@ async function fetchState(){
   const ti = document.getElementById('ticket-info');
   if(s.current_ticket){
     const t = s.current_ticket;
-    ti.innerHTML = `<strong>${t.ticket_id}</strong><br>
-      <span>${t.subject}</span><br>
-      <span class="tag tag-cat">${t.category||'--'}</span>
-      <span class="tag tag-pri">${t.ground_truth_priority||'--'}</span>
-      <span class="tag tag-tier">${t.ground_truth_tier||'--'}</span><br>
-      <span style="font-size:.8em;color:var(--muted);margin-top:4px;display:inline-block">${(t.body||'').substring(0,120)}...</span>`;
+    ti.innerHTML = `<strong>${escapeHtml(t.ticket_id)}</strong><br>
+      <span>${escapeHtml(t.subject)}</span><br>
+      <span class="tag tag-cat">${escapeHtml(t.category||'--')}</span>
+      <span class="tag tag-pri">${escapeHtml(t.ground_truth_priority||'--')}</span>
+      <span class="tag tag-tier">${escapeHtml(t.ground_truth_tier||'--')}</span><br>
+      <span style="font-size:.8em;color:var(--muted);margin-top:4px;display:inline-block">${escapeHtml((t.body||'').substring(0,120))}...</span>`;
     setSLA(s.steps_on_current_ticket, t.sla_steps||5);
   } else {
     ti.innerHTML = '<span>No active ticket.</span>';
@@ -475,15 +479,15 @@ async function openKbExplorer() {
   list.innerHTML = r.entries.map(e => `
     <div class="kb-entry-card" style="border-color:${e.created_by==='seed'?'rgba(0,0,0,0.1)':'var(--border)'}">
       <div class="kb-entry-title">
-        <span>${e.title}</span>
-        <span class="tag tag-tier">${e.created_by}</span>
+        <span>${escapeHtml(e.title)}</span>
+        <span class="tag tag-tier">${escapeHtml(e.created_by)}</span>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
-        <span class="tag tag-cat">${e.category}</span>
-        <span class="tag tag-pri">Used: ${e.times_used}</span>
+        <span class="tag tag-cat">${escapeHtml(e.category)}</span>
+        <span class="tag tag-pri">Used: ${escapeHtml(e.times_used)}</span>
       </div>
-      <div class="kb-entry-body"><strong>Problem:</strong>\n${e.problem_description}</div>
-      <div class="kb-entry-body"><strong>Solution:</strong>\n${e.solution}</div>
+      <div class="kb-entry-body"><strong>Problem:</strong>\n${escapeHtml(e.problem_description)}</div>
+      <div class="kb-entry-body"><strong>Solution:</strong>\n${escapeHtml(e.solution)}</div>
     </div>
   `).join('');
 }
@@ -554,7 +558,7 @@ async function heuristicStep(){
   const r = await api('/heuristic_step', 'POST');
   if(!r) return false;
   if(r.error){addLog(`Heuristic: ${r.error}`, 'log-err'); return false}
-  addLog(`<span class="log-ag">[${(r.agent_role||'').toUpperCase()}]</span> ${r.action_type} -> <span class="log-rw">${(r.reward||0).toFixed(2)}</span>`);
+  addLog(`[${(r.agent_role||'').toUpperCase()}] ${r.action_type} -> ${(r.reward||0).toFixed(2)}`, 'log-ag');
   if(r.done){addLog('[DONE] Episode complete!', 'log-ag'); return false}
   await fetchAll();
   return true;

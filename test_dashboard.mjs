@@ -1,0 +1,12 @@
+import { readFileSync } from "node:fs";
+import { strict as assert } from "node:assert";
+import vm from "node:vm";
+const html = readFileSync(new URL("server/live-dashboard.html", import.meta.url), "utf8");
+const source = html.match(/function escapeHtml\(value\) \{[\s\S]*?\n\}/)?.[0];
+assert.ok(source);
+const escape = vm.runInNewContext(source + "; escapeHtml");
+assert.equal(escape('<img src=x onerror="alert(1)">'), '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+assert.equal(escape("a&b'c"), "a&amp;b&#39;c");
+assert.equal(escape(null), "");
+for (const field of ["t.subject", "e.title", "e.solution", "msg"]) assert.ok(html.includes("${escapeHtml(" + field + ")}"));
+console.log("Dashboard HTML escaping checks passed");
