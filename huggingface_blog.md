@@ -1,3 +1,5 @@
+> Historical submission draft. Training-uplift claims and comparison plots below are unverified; use README.md for the current supported scope.
+
 # HelpdeskEnv: Teaching AI to Think Like an IT Support Team
 
 **TL;DR**: We built a multi-agent RL environment where 4 specialized agents (Triage, L1, L2, L3) collaborate to resolve IT tickets under SLA pressure. A persistent Knowledge Base enables self-improvement — L3 writes KB articles for novel issues, future episodes resolve tickets faster. Baseline heuristic: 0.907 composite. After GRPO training on Qwen2.5-0.5B: 0.960 (+5.3% improvement, +25% on KB contribution). This is OpenEnv Hackathon Grand Finale 2026.

@@ -83,20 +83,23 @@ class HelpdeskEnv:
         Returns:
             HelpdeskResetResponse with the first ticket and episode metadata.
         """
+        if num_tickets is not None and (isinstance(num_tickets, bool) or not isinstance(num_tickets, int) or num_tickets < 1):
+            raise ValueError("num_tickets must be a positive integer")
+        if custom_tickets is not None and not custom_tickets:
+            raise ValueError("custom_tickets must not be empty")
+        rng = random.Random(seed)
         self._episode_count += 1
         
         if custom_tickets:
             self._tickets = custom_tickets
         else:
             all_scenarios = get_all_ticket_scenarios()
-            if seed is not None:
-                random.seed(seed)
             if num_tickets is None or num_tickets >= len(all_scenarios):
                 self._tickets = list(all_scenarios)
                 if seed is not None:
-                    random.shuffle(self._tickets)
+                    rng.shuffle(self._tickets)
             else:
-                self._tickets = random.sample(all_scenarios, min(num_tickets, len(all_scenarios)))
+                self._tickets = rng.sample(all_scenarios, min(num_tickets, len(all_scenarios)))
         # Reset episode state (but NOT the KB!)
         self._current_ticket_idx = 0
         self._current_agent = AgentRole.TRIAGE  # Always start with triage
@@ -250,7 +253,7 @@ class HelpdeskEnv:
         4. Return the grading result
 
         SUPPORT phase (current_agent == L1/L2/L3):
-        → Handled in Part 12
+        → Resolution, response, escalation, and knowledge-base actions.
 
         Args:
             action: The HelpdeskAction submitted by the current agent.
@@ -271,7 +274,6 @@ class HelpdeskEnv:
             return self._handle_triage(ticket, action)
 
         # ── SUPPORT PHASE (L1/L2/L3) ─────────────────────────────
-        # Placeholder — will be implemented in Part 12
         return self._handle_support(ticket, action)
 
     def _handle_triage(self, ticket: Ticket, action: HelpdeskAction) -> StepResult:
