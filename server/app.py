@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse, FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import Any, Dict, List, Optional
 
 from helpdeskenv_class import HelpdeskEnv
@@ -25,7 +25,7 @@ _helpdesk_env = HelpdeskEnv()
 
 class ResetRequest(BaseModel):
     seed: Optional[int] = None
-    num_tickets: Optional[int] = None
+    num_tickets: Optional[int] = Field(default=None, ge=1)
 
     class Config:
         json_schema_extra = {
@@ -33,14 +33,24 @@ class ResetRequest(BaseModel):
         }
 
 class CustomTicketRequest(BaseModel):
+    @field_validator("category", "priority", mode="before")
+    @classmethod
+    def normalize_label(cls, value):
+        return value.lower() if isinstance(value, str) else value
+
+    @field_validator("tier", mode="before")
+    @classmethod
+    def normalize_tier(cls, value):
+        return value.upper() if isinstance(value, str) else value
+
     subject: str
     sender: str
     body: str
-    category: str
-    priority: str
-    tier: str
+    category: TicketCategory
+    priority: TicketPriority
+    tier: SupportTier
     resolution: str
-    sla_steps: int = 5
+    sla_steps: int = Field(default=5, ge=1)
     requires_kb_article: bool = False
 
     class Config:
@@ -59,8 +69,13 @@ class CustomTicketRequest(BaseModel):
         }
 
 class StepRequest(BaseModel):
+    @field_validator("agent_role", mode="before")
+    @classmethod
+    def normalize_role(cls, value):
+        return value.lower() if isinstance(value, str) else value
+
     ticket_id: str
-    agent_role: str
+    agent_role: AgentRole
     action_type: str
     action_value: str
 
@@ -264,12 +279,12 @@ async def reset_custom(body: CustomTicketRequest = Body(...)) -> Dict[str, Any]:
     try:
         custom_ticket = Ticket(
             ticket_id=f"custom_{_helpdesk_env.episode_count + 1}",
-            category=TicketCategory(body.category.lower()),
+            category=body.category,
             subject=body.subject,
             sender=body.sender,
             body=body.body,
-            ground_truth_priority=TicketPriority(body.priority.lower()),
-            ground_truth_tier=SupportTier(body.tier.upper()),
+            ground_truth_priority=body.priority,
+            ground_truth_tier=body.tier,
             ground_truth_resolution=body.resolution,
             sla_steps=body.sla_steps,
             requires_kb_article=body.requires_kb_article
@@ -292,7 +307,7 @@ async def step(body: StepRequest = Body(...)):
     try:
         action = HelpdeskAction(
             ticket_id=body.ticket_id,
-            agent_role=AgentRole(body.agent_role.lower()),
+            agent_role=body.agent_role,
             action_type=body.action_type,
             action_value=body.action_value,
         )
